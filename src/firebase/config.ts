@@ -12,11 +12,10 @@
  * Project settings > General > Your apps > Web app > Firebase SDK snippet > Config
  */
 export const firebaseConfig = {
-  // TODO: Replace with your actual Firebase project configuration.
-  apiKey: 'REPLACE_WITH_YOUR_API_KEY',
-  authDomain: 'REPLACE_WITH_YOUR_AUTH_DOMAIN',
-  projectId: 'REPLACE_WITH_YOUR_PROJECT_ID',
-  storageBucket: 'REPLACE_WITH_YOUR_STORAGE_BUCKET',
-  messagingSenderId: 'REPLACE_WITH_YOUR_MESSAGING_SENDER_ID',
-  appId: 'REPLACE_WITH_YOUR_APP_ID',
+  apiKey: "AIzaSyCDFzmcOhkbnTFiCGUAnEsa1IpHmdT4vtw",
+  authDomain: "studio-7884707695-df969.firebaseapp.com",
+  projectId: "studio-7884707695-df969",
+  storageBucket: "studio-7884707695-df969.appspot.com",
+  messagingSenderId: "978989728503",
+  appId: "1:978989728503:web:5dd1d7eb83ccefb0a209f2"
 };
