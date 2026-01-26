@@ -7,6 +7,9 @@ import type { UserDetails, AssessmentRecord } from '@/lib/types';
 import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
 import { useUser, loginWithGoogle, logout, useAuth, useFirestore, useCollection } from '@/firebase';
 import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
+
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,7 +122,7 @@ function AuthenticatedContent({ user }: { user: User }) {
     setScreen('welcome');
   };
 
-  const saveAssessment = async () => {
+  const saveAssessment = () => {
     const totalScore = answers.reduce((a, b) => a + b, 0);
     const level = maturityLevels.find(l => totalScore >= l.min && totalScore <= l.max);
     
@@ -133,17 +136,22 @@ function AuthenticatedContent({ user }: { user: User }) {
       level: level.name,
       ...userDetails,
     };
-
-    try {
-      await addDoc(collection(firestore, 'assessments'), assessmentData);
-    } catch (e) {
-      console.error('Error saving assessment:', e);
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "Could not save your assessment. Please try again.",
+    
+    const assessmentCollection = collection(firestore, 'assessments');
+    addDoc(assessmentCollection, assessmentData)
+      .catch((serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: assessmentCollection.path,
+          operation: 'create',
+          requestResourceData: assessmentData,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Could not save your assessment. Please try again.",
+        });
       });
-    }
   };
 
   const progress = (currentQuestion + 1) / questions.length * 100;
