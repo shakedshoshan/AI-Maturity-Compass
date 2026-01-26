@@ -2,10 +2,10 @@
 
 import * as React from 'react';
 import { questions, maturityLevels } from '@/lib/assessment-data';
-import type { UserDetails, AssessmentRecord } from '@/lib/types';
+import type { UserDetails } from '@/lib/types';
 import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
-import { useFirestore, useCollection, useAssessmentStats } from '@/firebase';
-import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
+import { useFirestore, useAssessmentStats } from '@/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, Activity } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart, FileText, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, Activity } from 'lucide-react';
 
 import { OrtLogo, CubeIcon } from '@/components/assessment/icons';
 import RadarChart from '@/components/assessment/radar-chart';
@@ -36,8 +36,6 @@ function AssessmentContent() {
   const [userDetails, setUserDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '' });
 
   const [isSummaryModalOpen, setSummaryModalOpen] = React.useState(false);
-  const [isAdminLoginOpen, setAdminLoginOpen] = React.useState(false);
-  const [isAdminDashboardOpen, setAdminDashboardOpen] = React.useState(false);
   
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -161,7 +159,6 @@ function AssessmentContent() {
               answers={answers}
               onRestart={restartAssessment}
               onShowSummary={() => setSummaryModalOpen(true)}
-              onShowAdmin={() => setAdminLoginOpen(true)}
             />
           )}
         </div>
@@ -172,15 +169,6 @@ function AssessmentContent() {
         onClose={() => setSummaryModalOpen(false)} 
         answers={answers} 
         userDetails={userDetails}
-      />
-      <AdminLoginModal 
-        isOpen={isAdminLoginOpen} 
-        onClose={() => setAdminLoginOpen(false)} 
-        onSuccess={() => { setAdminLoginOpen(false); setAdminDashboardOpen(true); }}
-      />
-      <AdminDashboardModal 
-        isOpen={isAdminDashboardOpen} 
-        onClose={() => setAdminDashboardOpen(false)} 
       />
     </>
   );
@@ -193,8 +181,8 @@ function Header({ progress, currentQuestion, totalQuestions }: { progress: numbe
     <header className="glass-dark sticky top-0 z-50 px-6 py-4">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-xl glass flex items-center justify-center glow">
-            <OrtLogo className="w-10 h-10" />
+          <div className="w-24 h-14 rounded-xl glass flex items-center justify-center glow">
+            <OrtLogo className="h-12 w-32" />
           </div>
           <div>
             <h1 className="text-xl font-bold gradient-text">מדד בשלות AI</h1>
@@ -451,7 +439,7 @@ function ScoreComparisonSection({ currentScore }: { currentScore: number }) {
   );
 }
 
-function ResultsScreen({ answers, onRestart, onShowSummary, onShowAdmin }: any) {
+function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
   const [totalScore, setTotalScore] = React.useState(0);
   const [displayScore, setDisplayScore] = React.useState(0);
   const [recommendation, setRecommendation] = React.useState('טוען המלצה...');
@@ -648,7 +636,6 @@ function ResultsScreen({ answers, onRestart, onShowSummary, onShowAdmin }: any) 
       {/* Action Buttons */}
       <div className="flex flex-wrap justify-center gap-4">
         <Button onClick={onShowSummary} variant="ghost" className="flex items-center gap-2 px-6 py-3 h-auto glass rounded-xl font-medium hover:bg-white/10 transition-all hover:text-white"><FileText className="w-5 h-5" /> צפייה בסיכום</Button>
-        <Button onClick={onShowAdmin} variant="ghost" className="flex items-center gap-2 px-6 py-3 h-auto glass rounded-xl font-medium hover:bg-white/10 transition-all hover:text-white"><BarChart className="w-5 h-5" /> ריכוז נתונים</Button>
         <Button onClick={onRestart} className="flex items-center gap-2 px-6 py-3 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-xl font-medium hover:scale-105 transition-all"><RefreshCcw className="w-5 h-5" /> הערכה חוזרת</Button>
       </div>
     </div>
@@ -672,7 +659,7 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
           <div className="flex items-center justify-between mb-6 pb-4 border-b">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-[#004080] flex items-center justify-center">
-                <OrtLogo className="w-8 h-8" fill="white" />
+                <OrtLogo className="w-8 h-8" />
               </div>
               <div>
                 <DialogTitle className="text-xl font-bold text-[#004080]">דוח בשלות AI</DialogTitle>
@@ -733,181 +720,3 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
   );
 }
 
-function AdminLoginModal({ isOpen, onClose, onSuccess }: any) {
-  const [code, setCode] = React.useState('');
-  const [error, setError] = React.useState(false);
-  const ADMIN_CODE = '1212';
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (code === ADMIN_CODE) {
-      onSuccess();
-      setCode('');
-      setError(false);
-    } else {
-      setError(true);
-      setCode('');
-    }
-  };
-
-  if(!isOpen) return null;
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="glass-dark rounded-2xl max-w-md w-full p-8 border-none sm:rounded-2xl">
-        <DialogHeader>
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#004080] to-[#0066cc] flex items-center justify-center mb-4">
-              <Lock className="w-8 h-8" />
-            </div>
-            <DialogTitle className="text-2xl font-bold text-white mb-2">כניסת מנהל</DialogTitle>
-            <p className="text-blue-300/70 text-sm">הזן קוד גישה לצפייה בריכוז נתונים</p>
-          </div>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label htmlFor="admin-code" className="sr-only">קוד גישה</Label>
-            <Input type="password" id="admin-code" value={code} onChange={(e) => setCode(e.target.value)} className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white text-center text-2xl tracking-widest focus:outline-none focus:border-blue-400 transition-colors" placeholder="••••" maxLength={4} required />
-            {error && <p className="mt-2 text-sm text-rose-400 text-center">קוד שגוי, נסה שוב</p>}
-          </div>
-          <div className="flex gap-3">
-            <Button type="button" onClick={onClose} variant="ghost" className="flex-1 h-auto px-6 py-3 glass rounded-xl font-medium hover:bg-white/10 transition-all hover:text-white">ביטול</Button>
-            <Button type="submit" className="flex-1 h-auto px-6 py-3 bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-xl font-medium hover:scale-105 transition-all">כניסה</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AdminDashboardModal({ isOpen, onClose }: any) {
-    const firestore = useFirestore();
-    const assessmentsQuery = React.useMemo(() => {
-        if (!firestore) return null;
-        try {
-          return query(collection(firestore, 'assessments'), orderBy('createdAt', 'desc'), limit(50));
-        } catch (error) {
-          console.error('Error creating query:', error);
-          return null;
-        }
-    }, [firestore]);
-
-    const { data: assessments, loading } = useCollection<AssessmentRecord>(assessmentsQuery);
-    const { toast } = useToast();
-
-    const clearData = () => {
-        if(window.confirm('האם אתה בטוח שברצונך למחוק את כל נתוני ההערכות? פעולה זו אינה ניתנת לביטול.')) {
-            toast({
-                title: "Action Not Supported",
-                description: "Clearing all data from the client is not supported in this version.",
-            });
-        }
-    };
-
-    if (!isOpen) return null;
-
-    const totalAssessments = assessments?.length || 0;
-    const avgScore = totalAssessments > 0 ? (assessments.reduce((sum, a) => sum + a.totalScore, 0) / totalAssessments).toFixed(1) : 0;
-    
-    const levelCounts: Record<string, number> = totalAssessments > 0 
-        ? assessments.reduce((acc, a) => {
-            acc[a.level] = (acc[a.level] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>)
-        : {};
-    const dominantLevel = totalAssessments > 0 ? Object.keys(levelCounts).reduce((a, b) => levelCounts[a] > levelCounts[b] ? a : b) : '-';
-
-    const domainAverages = questions.map((_, idx) => {
-        if(totalAssessments === 0 || !assessments) return 0;
-        const sum = assessments.reduce((acc, a) => acc + a.answers[idx], 0);
-        return sum / totalAssessments;
-    });
-
-    const weakestDomainIdx = domainAverages.indexOf(Math.min(...domainAverages));
-    const weakestDomain = totalAssessments > 0 ? questions[weakestDomainIdx].category : '-';
-
-    const stats = [
-        { label: 'סה"כ הערכות', value: totalAssessments },
-        { label: 'ממוצע ציונים', value: avgScore },
-        { label: 'רמה דומיננטית', value: dominantLevel, small: true },
-        { label: 'תחום חלש ביותר', value: weakestDomain, small: true },
-    ];
-
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="glass-dark rounded-2xl max-w-6xl w-full max-h-[90vh] my-8 p-0 sm:rounded-2xl border-none flex flex-col">
-                <DialogHeader className="sticky top-0 glass-dark p-6 border-b border-white/10 flex items-center justify-between z-10 flex-shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#004080] to-[#0066cc] flex items-center justify-center">
-                            <BarChart className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <DialogTitle className="text-xl font-bold text-white">ריכוז נתונים - לוח בקרה</DialogTitle>
-                            <p className="text-sm text-blue-300/70">סטטיסטיקות והערכות שבוצעו</p>
-                        </div>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={onClose}><X className="w-6 h-6" /></Button>
-                </DialogHeader>
-
-                <div className="p-6 space-y-6 overflow-y-auto">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {stats.map(stat => (
-                            <div key={stat.label} className="summary-card rounded-xl p-4">
-                                <div className="text-blue-400 text-sm mb-1">{stat.label}</div>
-                                <div className={`${stat.small ? 'text-lg' : 'text-3xl'} font-bold text-white`}>{stat.value}</div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="summary-card rounded-xl p-6">
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><BarChart className="w-5 h-5 text-blue-400" /> ממוצעים לפי תחומים</h3>
-                            <div className="space-y-3">
-                                {loading && <p className="text-blue-300/60 text-center py-4">טוען נתונים...</p>}
-                                {!loading && totalAssessments > 0 && assessments ? questions.map((q, idx) => (
-                                    <div key={q.id} className="flex items-center gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex justify-between mb-1">
-                                                <span className="text-sm text-blue-200">{q.category}</span>
-                                                <span className="text-sm font-bold text-blue-400">{domainAverages[idx].toFixed(1)}</span>
-                                            </div>
-                                            <Progress value={domainAverages[idx] * 20} className="h-2 bg-white/10" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
-                                        </div>
-                                    </div>
-                                )) : !loading && <p className="text-blue-300/60 text-center py-4">לא בוצעו הערכות עדיין</p>}
-                            </div>
-                        </div>
-
-                        <div className="summary-card rounded-xl p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-bold text-white flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400" /> הערכות אחרונות</h3>
-                                <Button onClick={clearData} variant="ghost" size="sm" className="text-sm px-4 py-2 glass rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-all">נקה נתונים</Button>
-                            </div>
-                            <div className="space-y-2 max-h-96 overflow-auto pr-2">
-                                {loading && <p className="text-blue-300/60 text-center py-4">טוען הערכות...</p>}
-                                {!loading && totalAssessments > 0 && assessments ? assessments.map(a => (
-                                    <div key={a.id} className="glass rounded-lg p-4 hover:bg-white/5 transition-all">
-                                        <div className="flex items-center justify-between mb-3">
-                                          <div className="flex items-center gap-4">
-                                              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-lg font-bold">{a.totalScore}</div>
-                                              <div>
-                                                  <div className="font-medium text-white">{a.level}</div>
-                                                  <div className="text-xs text-blue-300/70">{new Date(a.createdAt).toLocaleString('he-IL')}</div>
-                                              </div>
-                                          </div>
-                                        </div>
-                                        <div className="flex gap-4 text-xs text-blue-300/60 pt-2 border-t border-white/5">
-                                            <span><strong>אימייל:</strong> {a.email}</span>
-                                            <span><strong>בי"ס:</strong> {a.schoolName}</span>
-                                            <span><strong>עיר:</strong> {a.city}</span>
-                                        </div>
-                                    </div>
-                                )) : !loading && <p className="text-blue-300/60 text-center py-4">לא קיימות הערכות</p>}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
-    );
-}

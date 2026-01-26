@@ -8,6 +8,11 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 export const metadata: Metadata = {
   title: 'מדד בשלות AI - רשת אורט',
   description: 'כלי אבחון מתקדם למנהלי בתי ספר להערכת רמת הבשלות הארגונית בתחום הבינה המלאכותית לפי מודל ICMM',
+  icons: {
+    icon: '/ort-logo.png',
+    shortcut: '/ort-logo.png',
+    apple: '/ort-logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -18,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" className="h-full">
       <head>
+        <link rel="icon" href="/ort-logo.png" type="image/png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
