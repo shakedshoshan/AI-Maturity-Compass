@@ -1,9 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import type { User } from 'firebase/auth';
 import { questions, maturityLevels } from '@/lib/assessment-data';
 import type { UserDetails, AssessmentRecord } from '@/lib/types';
 import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
+import { useUser, loginWithGoogle, logout, useAuth } from '@/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,15 +14,65 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, LogOut } from 'lucide-react';
 
 import { OrtLogo, CubeIcon } from '@/components/assessment/icons';
 import RadarChart from '@/components/assessment/radar-chart';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 type Screen = 'welcome' | 'question' | 'results';
 
-// Main Application Component
+// Main Application Component that handles Auth
 export default function AssessmentPage() {
+  const { user, loading } = useUser();
+  
+  if (loading) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="text-white">טוען...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
+  return <AuthenticatedContent user={user} />;
+}
+
+function LoginScreen() {
+  const auth = useAuth();
+  return (
+    <>
+      <Header progress={0} currentQuestion={0} totalQuestions={0} />
+      <main className="flex-1 flex items-center justify-center p-6">
+        <div className="animate-scale-in">
+          <div className="glass-dark rounded-3xl p-10 text-center glow">
+            <div className="mb-8">
+              <div className="w-28 h-28 mx-auto rounded-full glass flex items-center justify-center mb-6 animate-float">
+                <CubeIcon className="w-16 h-16" />
+              </div>
+              <h2 className="text-4xl font-bold mb-4 gradient-text glow-text">מדד הבינה המלאכותית</h2>
+              <p className="text-xl text-blue-200/80 mb-2">AI Intelligence Index</p>
+              <p className="text-blue-300/60 max-w-lg mx-auto leading-relaxed">כדי להתחיל את ההערכה, יש להתחבר באמצעות חשבון גוגל.</p>
+            </div>
+            <Button onClick={() => loginWithGoogle(auth)} className="group relative px-10 py-4 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(0,64,128,0.6)]">
+              <span className="relative z-10 flex items-center gap-3">
+                התחברות עם גוגל
+                <ArrowLeft className="w-5 h-5 transform group-hover:-translate-x-2 transition-transform" />
+              </span>
+            </Button>
+          </div>
+        </div>
+      </main>
+    </>
+  );
+}
+
+
+function AuthenticatedContent({ user }: { user: User }) {
   const [screen, setScreen] = React.useState<Screen>('welcome');
   const [currentQuestion, setCurrentQuestion] = React.useState(0);
   const [answers, setAnswers] = React.useState<number[]>(() => Array(questions.length).fill(0));
@@ -52,7 +104,7 @@ export default function AssessmentPage() {
 
   const prevQuestion = () => {
     if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
+      setCurrentQuestion(currentQuestion + 1);
     }
   };
 
@@ -71,6 +123,7 @@ export default function AssessmentPage() {
 
     const assessment: AssessmentRecord = {
       id: Date.now(),
+      uid: user.uid,
       date: new Date().toISOString(),
       answers: [...answers],
       totalScore,
@@ -92,7 +145,7 @@ export default function AssessmentPage() {
 
   return (
     <>
-      <Header progress={screen === 'question' ? progress : 0} currentQuestion={currentQuestion + 1} totalQuestions={questions.length} />
+      <Header user={user} progress={screen === 'question' ? progress : 0} currentQuestion={currentQuestion + 1} totalQuestions={questions.length} />
       <main className="flex-1 flex items-center justify-center p-6">
         <div id="content-container" className="w-full max-w-3xl">
           {screen === 'welcome' && <WelcomeScreen onStart={startAssessment} />}
@@ -139,7 +192,8 @@ export default function AssessmentPage() {
 
 // Sub-components for each screen
 
-function Header({ progress, currentQuestion, totalQuestions }: { progress: number; currentQuestion: number; totalQuestions: number }) {
+function Header({ user, progress, currentQuestion, totalQuestions }: { user?: User | null, progress: number; currentQuestion: number; totalQuestions: number }) {
+  const auth = useAuth();
   return (
     <header className="glass-dark sticky top-0 z-50 px-6 py-4">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
@@ -159,6 +213,17 @@ function Header({ progress, currentQuestion, totalQuestions }: { progress: numbe
               <Progress value={progress} className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500 progress-glow" indicatorClassName="bg-transparent" />
             </div>
             <span className="text-sm font-medium text-blue-300">{currentQuestion}/{totalQuestions}</span>
+          </div>
+        )}
+        {user && (
+          <div className="flex items-center gap-4">
+            <Avatar className="w-10 h-10 border-2 border-blue-400/50">
+              <AvatarImage src={user.photoURL || undefined} />
+              <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <Button onClick={() => logout(auth)} variant="ghost" size="icon" className="glass rounded-xl text-blue-300 hover:text-white hover:bg-white/10">
+              <LogOut className="w-5 h-5" />
+            </Button>
           </div>
         )}
       </div>

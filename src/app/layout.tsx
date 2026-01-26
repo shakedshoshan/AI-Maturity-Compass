@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import AnimatedBackground from '@/components/assessment/animated-background';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'מדד בשלות AI - רשת אורט',
@@ -29,13 +30,15 @@ export default function RootLayout({
           'h-full overflow-auto bg-gradient-to-br from-[#0a0a1a] via-[#001030] to-[#0a0a1a] text-white font-body antialiased'
         )}
       >
-        <div id="app" className="h-full w-full relative overflow-auto">
-          <AnimatedBackground />
-          <div className="relative z-10 min-h-full flex flex-col">
-            {children}
+        <FirebaseClientProvider>
+          <div id="app" className="h-full w-full relative overflow-auto">
+            <AnimatedBackground />
+            <div className="relative z-10 min-h-full flex flex-col">
+              {children}
+            </div>
           </div>
-        </div>
-        <Toaster />
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
