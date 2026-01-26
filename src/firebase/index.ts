@@ -7,6 +7,8 @@ export { FirebaseProvider, useFirebase, useFirebaseApp, useFirestore } from './p
 export { FirebaseClientProvider } from './client-provider';
 export { useCollection } from './firestore/use-collection';
 export { useDoc } from './firestore/use-doc';
+export { useAssessmentStats } from './firestore/use-assessment-stats';
+export type { AssessmentStats } from './firestore/use-assessment-stats';
 
 
 // We need to use this to keep track of the initialized app,

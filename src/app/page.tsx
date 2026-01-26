@@ -4,7 +4,7 @@ import * as React from 'react';
 import { questions, maturityLevels } from '@/lib/assessment-data';
 import type { UserDetails, AssessmentRecord } from '@/lib/types';
 import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
-import { useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection, useAssessmentStats } from '@/firebase';
 import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 
 
@@ -15,10 +15,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, Activity } from 'lucide-react';
 
 import { OrtLogo, CubeIcon } from '@/components/assessment/icons';
 import RadarChart from '@/components/assessment/radar-chart';
+import ScoreDistributionChart from '@/components/assessment/score-distribution-chart';
 
 
 type Screen = 'welcome' | 'question' | 'results';
@@ -335,6 +336,121 @@ function QuestionScreen({ question, questionNumber, totalQuestions, answer, onSe
   );
 }
 
+function ScoreComparisonSection({ currentScore }: { currentScore: number }) {
+  const stats = useAssessmentStats(currentScore);
+
+  if (stats.loading) {
+    return (
+      <div className="glass-dark rounded-3xl p-8">
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+          <Activity className="w-6 h-6 text-blue-400" /> השוואה לכל ההערכות
+        </h3>
+        <div className="text-center py-8">
+          <p className="text-blue-300/70">טוען נתוני השוואה...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (stats.error || stats.totalAssessments === 0) {
+    return (
+      <div className="glass-dark rounded-3xl p-8">
+        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+          <Activity className="w-6 h-6 text-blue-400" /> השוואה לכל ההערכות
+        </h3>
+        <div className="text-center py-8">
+          <p className="text-blue-300/70">
+            {stats.totalAssessments === 0 
+              ? 'עדיין לא בוצעו הערכות נוספות להשוואה' 
+              : 'לא ניתן לטעון נתוני השוואה'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const scoreDifference = currentScore - stats.averageScore;
+  const isAboveAverage = scoreDifference > 0;
+  const differencePercent = stats.averageScore > 0 
+    ? Math.abs((scoreDifference / stats.averageScore) * 100).toFixed(1)
+    : '0';
+
+  return (
+    <div className="glass-dark rounded-3xl p-8">
+      <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+        <Activity className="w-6 h-6 text-blue-400" /> השוואה לכל ההערכות
+      </h3>
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Statistics */}
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-blue-500/20 to-cyan-400/20 rounded-xl p-6 border border-blue-400/30">
+            <div className="text-sm text-blue-400 font-medium mb-4">הציון שלך לעומת הממוצע</div>
+            <div className="flex items-end gap-4 mb-4">
+              <div>
+                <div className="text-3xl font-bold text-white">{currentScore}</div>
+                <div className="text-xs text-blue-300/70 mt-1">הציון שלך</div>
+              </div>
+              <div className="text-2xl text-blue-300/50">vs</div>
+              <div>
+                <div className="text-3xl font-bold text-blue-300">{stats.averageScore.toFixed(1)}</div>
+                <div className="text-xs text-blue-300/70 mt-1">ממוצע כל ההערכות</div>
+              </div>
+            </div>
+            <div className={`flex items-center gap-2 text-sm ${isAboveAverage ? 'text-emerald-400' : 'text-amber-400'}`}>
+              <TrendingUp className={`w-4 h-4 ${!isAboveAverage && 'rotate-180'}`} />
+              <span>
+                {isAboveAverage ? 'גבוה ב' : 'נמוך ב'} {Math.abs(scoreDifference).toFixed(1)} נקודות ({differencePercent}%)
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-500/20 to-pink-400/20 rounded-xl p-6 border border-purple-400/30">
+            <div className="text-sm text-purple-400 font-medium mb-2">דירוג אחוזוני</div>
+            <div className="flex items-center gap-4">
+              <div className="text-4xl font-bold text-white">{stats.percentile}</div>
+              <div className="text-2xl text-purple-300">%</div>
+              <div className="flex-1">
+                <div className="text-sm text-purple-300/80">הציון שלך גבוה מ-{stats.percentile}% מההערכות</div>
+                <Progress 
+                  value={stats.percentile} 
+                  className="h-2 mt-2 bg-white/10" 
+                  indicatorClassName="bg-gradient-to-r from-purple-500 to-pink-400"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center text-sm text-blue-300/60">
+            סה"כ {stats.totalAssessments} הערכות במערכת
+          </div>
+        </div>
+
+        {/* Distribution Chart */}
+        <div className="flex flex-col">
+          <div className="text-sm text-blue-400 font-medium mb-4">התפלגות ציונים</div>
+          <div className="flex-1 min-h-[250px]">
+            <ScoreDistributionChart 
+              distribution={stats.scoreDistribution}
+              currentScore={currentScore}
+              averageScore={stats.averageScore}
+            />
+          </div>
+          <div className="flex justify-center gap-6 mt-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-purple-500/50 border border-purple-400"></div>
+              <span className="text-blue-300/70">הציון שלך</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded border border-emerald-400 border-dashed"></div>
+              <span className="text-blue-300/70">ממוצע</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ResultsScreen({ answers, onRestart, onShowSummary, onShowAdmin }: any) {
   const [totalScore, setTotalScore] = React.useState(0);
   const [displayScore, setDisplayScore] = React.useState(0);
@@ -476,7 +592,10 @@ function ResultsScreen({ answers, onRestart, onShowSummary, onShowAdmin }: any) 
           <div className="flex items-center gap-2"><div className="w-4 h-4 rounded border border-emerald-400 border-dashed"></div><span className="text-blue-300/70">יעד (רמה 5)</span></div>
         </div>
       </div>
-      
+
+      {/* Score Comparison Section */}
+      <ScoreComparisonSection currentScore={score} />
+
        {/* Stage Feedback Card */}
        <div className="glass-dark rounded-3xl p-8 border-2 border-blue-400/30">
         <div className="flex items-start gap-6 mb-6">
