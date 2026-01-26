@@ -21,9 +21,9 @@ export interface UserDetails {
 }
 
 export interface AssessmentRecord extends UserDetails {
-  id: number;
+  id?: string;
   uid: string;
-  date: string;
+  createdAt: string;
   answers: number[];
   totalScore: number;
   level: string;

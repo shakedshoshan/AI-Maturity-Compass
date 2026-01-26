@@ -5,7 +5,8 @@ import type { User } from 'firebase/auth';
 import { questions, maturityLevels } from '@/lib/assessment-data';
 import type { UserDetails, AssessmentRecord } from '@/lib/types';
 import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
-import { useUser, loginWithGoogle, logout, useAuth } from '@/firebase';
+import { useUser, loginWithGoogle, logout, useAuth, useFirestore, useCollection } from '@/firebase';
+import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,6 +82,9 @@ function AuthenticatedContent({ user }: { user: User }) {
   const [isSummaryModalOpen, setSummaryModalOpen] = React.useState(false);
   const [isAdminLoginOpen, setAdminLoginOpen] = React.useState(false);
   const [isAdminDashboardOpen, setAdminDashboardOpen] = React.useState(false);
+  
+  const firestore = useFirestore();
+  const { toast } = useToast();
 
   const startAssessment = (details: UserDetails) => {
     setUserDetails(details);
@@ -104,7 +108,7 @@ function AuthenticatedContent({ user }: { user: User }) {
 
   const prevQuestion = () => {
     if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion + 1);
+      setCurrentQuestion(currentQuestion - 1);
     }
   };
 
@@ -115,16 +119,15 @@ function AuthenticatedContent({ user }: { user: User }) {
     setScreen('welcome');
   };
 
-  const saveAssessment = () => {
+  const saveAssessment = async () => {
     const totalScore = answers.reduce((a, b) => a + b, 0);
     const level = maturityLevels.find(l => totalScore >= l.min && totalScore <= l.max);
     
-    if (!level) return;
+    if (!level || !firestore) return;
 
-    const assessment: AssessmentRecord = {
-      id: Date.now(),
+    const assessmentData = {
       uid: user.uid,
-      date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       answers: [...answers],
       totalScore,
       level: level.name,
@@ -132,12 +135,14 @@ function AuthenticatedContent({ user }: { user: User }) {
     };
 
     try {
-      const stored = localStorage.getItem('ort_ai_assessments');
-      const assessments = stored ? JSON.parse(stored) : [];
-      assessments.push(assessment);
-      localStorage.setItem('ort_ai_assessments', JSON.stringify(assessments.slice(-50)));
+      await addDoc(collection(firestore, 'assessments'), assessmentData);
     } catch (e) {
       console.error('Error saving assessment:', e);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Could not save your assessment. Please try again.",
+      });
     }
   };
 
@@ -659,42 +664,39 @@ function AdminLoginModal({ isOpen, onClose, onSuccess }: any) {
 }
 
 function AdminDashboardModal({ isOpen, onClose }: any) {
-    const [assessments, setAssessments] = React.useState<AssessmentRecord[]>([]);
+    const firestore = useFirestore();
+    const assessmentsQuery = React.useMemo(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'assessments'), orderBy('createdAt', 'desc'), limit(50));
+    }, [firestore]);
+
+    const { data: assessments, loading } = useCollection<AssessmentRecord>(assessmentsQuery);
     const { toast } = useToast();
 
-    React.useEffect(() => {
-        if (isOpen) {
-            try {
-                const stored = localStorage.getItem('ort_ai_assessments');
-                setAssessments(stored ? JSON.parse(stored) : []);
-            } catch (e) {
-                console.error('Error reading assessments:', e);
-                setAssessments([]);
-            }
-        }
-    }, [isOpen]);
-    
     const clearData = () => {
         if(window.confirm('האם אתה בטוח שברצונך למחוק את כל נתוני ההערכות? פעולה זו אינה ניתנת לביטול.')) {
-            localStorage.removeItem('ort_ai_assessments');
-            setAssessments([]);
-            toast({ title: "הנתונים נמחקו בהצלחה" });
+            toast({
+                title: "Action Not Supported",
+                description: "Clearing all data from the client is not supported in this version.",
+            });
         }
     };
 
     if (!isOpen) return null;
 
-    const totalAssessments = assessments.length;
+    const totalAssessments = assessments?.length || 0;
     const avgScore = totalAssessments > 0 ? (assessments.reduce((sum, a) => sum + a.totalScore, 0) / totalAssessments).toFixed(1) : 0;
     
-    const levelCounts = assessments.reduce((acc, a) => {
-        acc[a.level] = (acc[a.level] || 0) + 1;
-        return acc;
-    }, {} as Record<string, number>);
+    const levelCounts: Record<string, number> = totalAssessments > 0 
+        ? assessments.reduce((acc, a) => {
+            acc[a.level] = (acc[a.level] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>)
+        : {};
     const dominantLevel = totalAssessments > 0 ? Object.keys(levelCounts).reduce((a, b) => levelCounts[a] > levelCounts[b] ? a : b) : '-';
 
     const domainAverages = questions.map((_, idx) => {
-        if(totalAssessments === 0) return 0;
+        if(totalAssessments === 0 || !assessments) return 0;
         const sum = assessments.reduce((acc, a) => acc + a.answers[idx], 0);
         return sum / totalAssessments;
     });
@@ -739,7 +741,8 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
                         <div className="summary-card rounded-xl p-6">
                             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><BarChart className="w-5 h-5 text-blue-400" /> ממוצעים לפי תחומים</h3>
                             <div className="space-y-3">
-                                {totalAssessments > 0 ? questions.map((q, idx) => (
+                                {loading && <p className="text-blue-300/60 text-center py-4">טוען נתונים...</p>}
+                                {!loading && totalAssessments > 0 && assessments ? questions.map((q, idx) => (
                                     <div key={q.id} className="flex items-center gap-4">
                                         <div className="flex-1">
                                             <div className="flex justify-between mb-1">
@@ -749,7 +752,7 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
                                             <Progress value={domainAverages[idx] * 20} className="h-2 bg-white/10" indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400" />
                                         </div>
                                     </div>
-                                )) : <p className="text-blue-300/60 text-center py-4">לא בוצעו הערכות עדיין</p>}
+                                )) : !loading && <p className="text-blue-300/60 text-center py-4">לא בוצעו הערכות עדיין</p>}
                             </div>
                         </div>
 
@@ -759,14 +762,15 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
                                 <Button onClick={clearData} variant="ghost" size="sm" className="text-sm px-4 py-2 glass rounded-lg hover:bg-rose-500/20 hover:text-rose-300 transition-all">נקה נתונים</Button>
                             </div>
                             <div className="space-y-2 max-h-96 overflow-auto pr-2">
-                                {totalAssessments > 0 ? assessments.slice().reverse().map(a => (
+                                {loading && <p className="text-blue-300/60 text-center py-4">טוען הערכות...</p>}
+                                {!loading && totalAssessments > 0 && assessments ? assessments.map(a => (
                                     <div key={a.id} className="glass rounded-lg p-4 hover:bg-white/5 transition-all">
                                         <div className="flex items-center justify-between mb-3">
                                           <div className="flex items-center gap-4">
                                               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-lg font-bold">{a.totalScore}</div>
                                               <div>
                                                   <div className="font-medium text-white">{a.level}</div>
-                                                  <div className="text-xs text-blue-300/70">{new Date(a.date).toLocaleString('he-IL')}</div>
+                                                  <div className="text-xs text-blue-300/70">{new Date(a.createdAt).toLocaleString('he-IL')}</div>
                                               </div>
                                           </div>
                                         </div>
@@ -775,7 +779,7 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
                                             <span><strong>עיר:</strong> {a.city}</span>
                                         </div>
                                     </div>
-                                )) : <p className="text-blue-300/60 text-center py-4">לא קיימות הערכות</p>}
+                                )) : !loading && <p className="text-blue-300/60 text-center py-4">לא קיימות הערכות</p>}
                             </div>
                         </div>
                     </div>
