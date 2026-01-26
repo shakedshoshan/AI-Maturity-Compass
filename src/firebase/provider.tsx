@@ -55,12 +55,3 @@ export const useFirestore = () => {
   }
   return firestore;
 };
-
-// Just providing a simple getter function as we are not using the full context everywhere.
-export const getAuth = () => {
-  const { auth } = useFirebase();
-  if (!auth) {
-    throw new Error('getAuth must be used within a FirebaseProvider context.');
-  }
-  return auth;
-};
