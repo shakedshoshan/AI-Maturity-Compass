@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, LogOut } from 'lucide-react';
@@ -419,7 +419,16 @@ function ResultsScreen({ answers, onRestart, onShowSummary, onShowAdmin }: any) 
         setRecommendation(result.recommendation);
       } catch (error) {
         console.error("Failed to get recommendation:", error);
-        setRecommendation("לא ניתן היה לטעון המלצה כעת. נסה שוב מאוחר יותר.");
+        
+        // Provide a more helpful fallback recommendation based on the weakest domain
+        const fallbackRecommendation = questions[weakestIndex]?.quickWin || 
+          `מומלץ להתמקד בשיפור התחום "${weakness}" כדי להעלות את רמת הבשלות הכללית.`;
+        
+        setRecommendation(
+          `⚠️ שירות ההמלצות האישיות אינו זמין כעת. ` +
+          `המלצה כללית: ${fallbackRecommendation} ` +
+          `ניתן לנסות שוב מאוחר יותר לקבלת המלצה מותאמת אישית.`
+        );
       }
     };
 
@@ -566,19 +575,21 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-white text-gray-900 rounded-2xl max-w-2xl w-full max-h-[90%] overflow-auto shadow-2xl p-0 sm:rounded-2xl border-none">
-        <div className="p-8">
+        <DialogHeader className="p-8 pb-0">
           <div className="flex items-center justify-between mb-6 pb-4 border-b">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-[#004080] flex items-center justify-center">
                 <OrtLogo className="w-8 h-8" fill="white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#004080]">דוח בשלות AI</h2>
+                <DialogTitle className="text-xl font-bold text-[#004080]">דוח בשלות AI</DialogTitle>
                 <p className="text-sm text-gray-500">AI Intelligence Index - ICMM Model</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></Button>
           </div>
+        </DialogHeader>
+        <div className="p-8 pt-0">
           <div className="space-y-6">
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -648,13 +659,15 @@ function AdminLoginModal({ isOpen, onClose, onSuccess }: any) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="glass-dark rounded-2xl max-w-md w-full p-8 border-none sm:rounded-2xl">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#004080] to-[#0066cc] flex items-center justify-center mb-4">
-            <Lock className="w-8 h-8" />
+        <DialogHeader>
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#004080] to-[#0066cc] flex items-center justify-center mb-4">
+              <Lock className="w-8 h-8" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-white mb-2">כניסת מנהל</DialogTitle>
+            <p className="text-blue-300/70 text-sm">הזן קוד גישה לצפייה בריכוז נתונים</p>
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2">כניסת מנהל</h3>
-          <p className="text-blue-300/70 text-sm">הזן קוד גישה לצפייה בריכוז נתונים</p>
-        </div>
+        </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label htmlFor="admin-code" className="sr-only">קוד גישה</Label>
@@ -722,18 +735,18 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="glass-dark rounded-2xl max-w-6xl w-full max-h-[90vh] my-8 p-0 sm:rounded-2xl border-none flex flex-col">
-                <div className="sticky top-0 glass-dark p-6 border-b border-white/10 flex items-center justify-between z-10 flex-shrink-0">
+                <DialogHeader className="sticky top-0 glass-dark p-6 border-b border-white/10 flex items-center justify-between z-10 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#004080] to-[#0066cc] flex items-center justify-center">
                             <BarChart className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white">ריכוז נתונים - לוח בקרה</h2>
+                            <DialogTitle className="text-xl font-bold text-white">ריכוז נתונים - לוח בקרה</DialogTitle>
                             <p className="text-sm text-blue-300/70">סטטיסטיקות והערכות שבוצעו</p>
                         </div>
                     </div>
                     <Button variant="ghost" size="icon" onClick={onClose}><X className="w-6 h-6" /></Button>
-                </div>
+                </DialogHeader>
 
                 <div className="p-6 space-y-6 overflow-y-auto">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -10,12 +10,15 @@
  *
  * You can get this configuration from the Firebase console:
  * Project settings > General > Your apps > Web app > Firebase SDK snippet > Config
+ *
+ * Configuration values are loaded from environment variables with fallback to
+ * hardcoded values for backward compatibility.
  */
 export const firebaseConfig = {
-  apiKey: "AIzaSyCDFzmcOhkbnTFiCGUAnEsa1IpHmdT4vtw",
-  authDomain: "studio-7884707695-df969.firebaseapp.com",
-  projectId: "studio-7884707695-df969",
-  storageBucket: "studio-7884707695-df969.firebasestorage.app",
-  messagingSenderId: "978989728503",
-  appId: "1:978989728503:web:5dd1d7eb83ccefb0a209f2"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCDFzmcOhkbnTFiCGUAnEsa1IpHmdT4vtw",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "studio-7884707695-df969.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "studio-7884707695-df969",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "studio-7884707695-df969.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "978989728503",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:978989728503:web:5dd1d7eb83ccefb0a209f2"
 };
