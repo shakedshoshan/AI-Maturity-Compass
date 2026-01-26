@@ -7,9 +7,6 @@ import type {
   Query,
 } from 'firebase/firestore';
 import { onSnapshot } from 'firebase/firestore';
-import { useAuth } from '@/firebase';
-import { errorEmitter } from '../error-emitter';
-import { FirestorePermissionError } from '../errors';
 
 interface CollectionData<T> {
   data: T[] | null;
@@ -20,14 +17,13 @@ interface CollectionData<T> {
 export function useCollection<T>(
   query: CollectionReference | Query | null
 ): CollectionData<T> {
-  const auth = useAuth();
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!query || !auth) {
-      // query or auth is not ready yet, do nothing
+    if (!query) {
+      setLoading(false);
       return;
     }
 
@@ -44,18 +40,14 @@ export function useCollection<T>(
         setLoading(false);
       },
       (err) => {
-        const permissionError = new FirestorePermissionError({
-          path: (query as CollectionReference).path,
-          operation: 'list',
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        setError(permissionError);
+        console.error('Firestore error:', err);
+        setError(err);
         setLoading(false);
       }
     );
 
     return () => unsubscribe();
-  }, [query, auth]);
+  }, [query]);
 
   return { data, loading, error };
 }

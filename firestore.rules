@@ -14,15 +14,10 @@ service cloud.firestore {
       allow create, update: if isOwner(userId);
     }
     
-    // ASSESSMENTS
+    // ASSESSMENTS - Public access for anonymous assessment tool
     match /assessments/{assessmentId} {
-      allow read, create: if request.auth != null;
-      // Allow update/delete only by the user who created it.
-      allow update, delete: if request.auth.uid == resource.data.uid;
-    }
-
-    match /assessments/{assessmentId}/{document=**} {
-      allow read, write: if request.auth.uid == resource.data.uid;
+      allow read, create: if true;  // Allow anyone to read and create assessments
+      allow update, delete: if false;  // Prevent modifications for data integrity
     }
   }
 }

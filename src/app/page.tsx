@@ -1,14 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import type { User } from 'firebase/auth';
 import { questions, maturityLevels } from '@/lib/assessment-data';
 import type { UserDetails, AssessmentRecord } from '@/lib/types';
 import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
-import { useUser, loginWithGoogle, logout, useAuth, useFirestore, useCollection } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection, addDoc, query, orderBy, limit } from 'firebase/firestore';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 
 import { Button } from '@/components/ui/button';
@@ -18,69 +15,24 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, LogOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart, FileText, Lock, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck } from 'lucide-react';
 
 import { OrtLogo, CubeIcon } from '@/components/assessment/icons';
 import RadarChart from '@/components/assessment/radar-chart';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 type Screen = 'welcome' | 'question' | 'results';
 
-// Main Application Component that handles Auth
+// Main Application Component
 export default function AssessmentPage() {
-  const { user, loading } = useUser();
-  
-  if (loading) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="text-white">טוען...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginScreen />;
-  }
-
-  return <AuthenticatedContent user={user} />;
+  return <AssessmentContent />;
 }
 
-function LoginScreen() {
-  const auth = useAuth();
-  return (
-    <>
-      <Header progress={0} currentQuestion={0} totalQuestions={0} />
-      <main className="flex-1 flex items-center justify-center p-6">
-        <div className="animate-scale-in">
-          <div className="glass-dark rounded-3xl p-10 text-center glow">
-            <div className="mb-8">
-              <div className="w-28 h-28 mx-auto rounded-full glass flex items-center justify-center mb-6 animate-float">
-                <CubeIcon className="w-16 h-16" />
-              </div>
-              <h2 className="text-4xl font-bold mb-4 gradient-text glow-text">מדד הבינה המלאכותית</h2>
-              <p className="text-xl text-blue-200/80 mb-2">AI Intelligence Index</p>
-              <p className="text-blue-300/60 max-w-lg mx-auto leading-relaxed">כדי להתחיל את ההערכה, יש להתחבר באמצעות חשבון גוגל.</p>
-            </div>
-            <Button onClick={() => loginWithGoogle(auth)} className="group relative px-10 py-4 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-2xl font-bold text-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(0,64,128,0.6)]">
-              <span className="relative z-10 flex items-center gap-3">
-                התחברות עם גוגל
-                <ArrowLeft className="w-5 h-5 transform group-hover:-translate-x-2 transition-transform" />
-              </span>
-            </Button>
-          </div>
-        </div>
-      </main>
-    </>
-  );
-}
-
-
-function AuthenticatedContent({ user }: { user: User }) {
+function AssessmentContent() {
   const [screen, setScreen] = React.useState<Screen>('welcome');
   const [currentQuestion, setCurrentQuestion] = React.useState(0);
   const [answers, setAnswers] = React.useState<number[]>(() => Array(questions.length).fill(0));
-  const [userDetails, setUserDetails] = React.useState<UserDetails>({ schoolName: '', city: '', role: '' });
+  const [userDetails, setUserDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '' });
 
   const [isSummaryModalOpen, setSummaryModalOpen] = React.useState(false);
   const [isAdminLoginOpen, setAdminLoginOpen] = React.useState(false);
@@ -88,6 +40,14 @@ function AuthenticatedContent({ user }: { user: User }) {
   
   const firestore = useFirestore();
   const { toast } = useToast();
+
+  // Debug Firebase connection
+  React.useEffect(() => {
+    console.log('Firebase connection status:', {
+      firestore: firestore ? 'Connected' : 'Not connected',
+      firestoreType: firestore ? typeof firestore : 'undefined'
+    });
+  }, [firestore]);
 
   const startAssessment = (details: UserDetails) => {
     setUserDetails(details);
@@ -118,7 +78,7 @@ function AuthenticatedContent({ user }: { user: User }) {
   const restartAssessment = () => {
     setCurrentQuestion(0);
     setAnswers(Array(questions.length).fill(0));
-    setUserDetails({ schoolName: '', city: '', role: '' });
+    setUserDetails({ email: '', schoolName: '', city: '', role: '' });
     setScreen('welcome');
   };
 
@@ -126,10 +86,22 @@ function AuthenticatedContent({ user }: { user: User }) {
     const totalScore = answers.reduce((a, b) => a + b, 0);
     const level = maturityLevels.find(l => totalScore >= l.min && totalScore <= l.max);
     
-    if (!level || !firestore) return;
+    if (!level) {
+      console.error('Could not determine maturity level');
+      return;
+    }
+
+    if (!firestore) {
+      console.warn('Firestore not available, assessment not saved to database');
+      toast({
+        variant: "destructive",
+        title: "שירות הנתונים לא זמין",
+        description: "ההערכה הושלמה אך לא נשמרה במערכת.",
+      });
+      return;
+    }
 
     const assessmentData = {
-      uid: user.uid,
       createdAt: new Date().toISOString(),
       answers: [...answers],
       totalScore,
@@ -137,28 +109,38 @@ function AuthenticatedContent({ user }: { user: User }) {
       ...userDetails,
     };
     
-    const assessmentCollection = collection(firestore, 'assessments');
-    addDoc(assessmentCollection, assessmentData)
-      .catch((serverError) => {
-        const permissionError = new FirestorePermissionError({
-          path: assessmentCollection.path,
-          operation: 'create',
-          requestResourceData: assessmentData,
-        });
-        errorEmitter.emit('permission-error', permissionError);
-        toast({
+    try {
+      const assessmentCollection = collection(firestore, 'assessments');
+      addDoc(assessmentCollection, assessmentData)
+        .then(() => {
+          toast({
+            title: "הערכה נשמרה בהצלחה",
+            description: "התוצאות שלך נשמרו במערכת.",
+          });
+        })
+        .catch((error) => {
+          console.error('Error saving assessment:', error);
+          toast({
             variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "Could not save your assessment. Please try again.",
+            title: "שגיאה בשמירה",
+            description: "לא ניתן היה לשמור את ההערכה. אנא נסה שוב.",
+          });
         });
+    } catch (error) {
+      console.error('Error creating collection reference:', error);
+      toast({
+        variant: "destructive",
+        title: "שגיאה בשמירה",
+        description: "בעיה בחיבור למערכת הנתונים.",
       });
+    }
   };
 
   const progress = (currentQuestion + 1) / questions.length * 100;
 
   return (
     <>
-      <Header user={user} progress={screen === 'question' ? progress : 0} currentQuestion={currentQuestion + 1} totalQuestions={questions.length} />
+      <Header progress={screen === 'question' ? progress : 0} currentQuestion={currentQuestion + 1} totalQuestions={questions.length} />
       <main className="flex-1 flex items-center justify-center p-6">
         <div id="content-container" className="w-full max-w-3xl">
           {screen === 'welcome' && <WelcomeScreen onStart={startAssessment} />}
@@ -205,8 +187,7 @@ function AuthenticatedContent({ user }: { user: User }) {
 
 // Sub-components for each screen
 
-function Header({ user, progress, currentQuestion, totalQuestions }: { user?: User | null, progress: number; currentQuestion: number; totalQuestions: number }) {
-  const auth = useAuth();
+function Header({ progress, currentQuestion, totalQuestions }: { progress: number; currentQuestion: number; totalQuestions: number }) {
   return (
     <header className="glass-dark sticky top-0 z-50 px-6 py-4">
       <div className="max-w-5xl mx-auto flex items-center justify-between">
@@ -228,24 +209,13 @@ function Header({ user, progress, currentQuestion, totalQuestions }: { user?: Us
             <span className="text-sm font-medium text-blue-300">{currentQuestion}/{totalQuestions}</span>
           </div>
         )}
-        {user && (
-          <div className="flex items-center gap-4">
-            <Avatar className="w-10 h-10 border-2 border-blue-400/50">
-              <AvatarImage src={user.photoURL || undefined} />
-              <AvatarFallback>{user.displayName?.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <Button onClick={() => logout(auth)} variant="ghost" size="icon" className="glass rounded-xl text-blue-300 hover:text-white hover:bg-white/10">
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
-        )}
       </div>
     </header>
   );
 }
 
 function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void }) {
-  const [details, setDetails] = React.useState<UserDetails>({ schoolName: '', city: '', role: '' });
+  const [details, setDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '' });
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,6 +254,10 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
           ))}
         </div>
         <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8 space-y-4">
+          <div className="text-right">
+            <Label htmlFor="email" className="block text-sm font-medium text-blue-300 mb-2">כתובת אימייל</Label>
+            <Input type="email" id="email" value={details.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="לדוגמה: manager@school.edu.il" required />
+          </div>
           <div className="text-right">
             <Label htmlFor="schoolName" className="block text-sm font-medium text-blue-300 mb-2">שם בית הספר</Label>
             <Input type="text" id="schoolName" value={details.schoolName} onChange={handleInputChange} className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="לדוגמה: אורט תל אביב" required />
@@ -592,8 +566,11 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
         <div className="p-8 pt-0">
           <div className="space-y-6">
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
+                <div><span className="text-blue-600 font-medium">אימייל:</span> <span className="text-gray-700 mr-2">{userDetails.email}</span></div>
                 <div><span className="text-blue-600 font-medium">בית הספר:</span> <span className="text-gray-700 mr-2">{userDetails.schoolName}</span></div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div><span className="text-blue-600 font-medium">עיר:</span> <span className="text-gray-700 mr-2">{userDetails.city}</span></div>
                 <div><span className="text-blue-600 font-medium">תפקיד:</span> <span className="text-gray-700 mr-2">{userDetails.role}</span></div>
               </div>
@@ -688,7 +665,12 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
     const firestore = useFirestore();
     const assessmentsQuery = React.useMemo(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'assessments'), orderBy('createdAt', 'desc'), limit(50));
+        try {
+          return query(collection(firestore, 'assessments'), orderBy('createdAt', 'desc'), limit(50));
+        } catch (error) {
+          console.error('Error creating query:', error);
+          return null;
+        }
     }, [firestore]);
 
     const { data: assessments, loading } = useCollection<AssessmentRecord>(assessmentsQuery);
@@ -796,6 +778,7 @@ function AdminDashboardModal({ isOpen, onClose }: any) {
                                           </div>
                                         </div>
                                         <div className="flex gap-4 text-xs text-blue-300/60 pt-2 border-t border-white/5">
+                                            <span><strong>אימייל:</strong> {a.email}</span>
                                             <span><strong>בי"ס:</strong> {a.schoolName}</span>
                                             <span><strong>עיר:</strong> {a.city}</span>
                                         </div>

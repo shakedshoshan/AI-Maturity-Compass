@@ -15,6 +15,7 @@ export interface MaturityLevel {
 }
 
 export interface UserDetails {
+  email: string;
   schoolName: string;
   city: string;
   role: string;
@@ -22,7 +23,6 @@ export interface UserDetails {
 
 export interface AssessmentRecord extends UserDetails {
   id?: string;
-  uid: string;
   createdAt: string;
   answers: number[];
   totalScore: number;

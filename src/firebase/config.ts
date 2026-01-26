@@ -1,5 +1,6 @@
 /**
- * This file contains the Firebase configuration.
+ * This file contains the Firebase configuration for Firestore only.
+ * Authentication has been removed from this application.
  *
  * IMPORTANT: This is a public configuration. Do not include any sensitive data
  * such as database secrets or API keys that are not meant to be client-facing.
@@ -7,9 +8,6 @@
  * The configuration is used to initialize the Firebase app on the client-side.
  * Security is enforced by Firebase Security Rules, not by keeping this
  * configuration private.
- *
- * You can get this configuration from the Firebase console:
- * Project settings > General > Your apps > Web app > Firebase SDK snippet > Config
  *
  * Configuration values are loaded from environment variables with fallback to
  * hardcoded values for backward compatibility.
