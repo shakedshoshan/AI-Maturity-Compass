@@ -19,6 +19,7 @@ export interface UserDetails {
   schoolName: string;
   city: string;
   role: string;
+  emailConsent: boolean;
 }
 
 export interface AssessmentRecord extends UserDetails {

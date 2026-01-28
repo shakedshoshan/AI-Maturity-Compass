@@ -14,12 +14,14 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ArrowRight, BarChart, FileText, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, Activity } from 'lucide-react';
 
 import { OrtLogo, CubeIcon } from '@/components/assessment/icons';
 import RadarChart from '@/components/assessment/radar-chart';
 import ScoreDistributionChart from '@/components/assessment/score-distribution-chart';
+import Header from '@/components/assessment/header';
 
 
 type Screen = 'welcome' | 'question' | 'results';
@@ -33,7 +35,7 @@ function AssessmentContent() {
   const [screen, setScreen] = React.useState<Screen>('welcome');
   const [currentQuestion, setCurrentQuestion] = React.useState(0);
   const [answers, setAnswers] = React.useState<number[]>(() => Array(questions.length).fill(0));
-  const [userDetails, setUserDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '' });
+  const [userDetails, setUserDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '', emailConsent: false });
 
   const [isSummaryModalOpen, setSummaryModalOpen] = React.useState(false);
   
@@ -77,7 +79,7 @@ function AssessmentContent() {
   const restartAssessment = () => {
     setCurrentQuestion(0);
     setAnswers(Array(questions.length).fill(0));
-    setUserDetails({ email: '', schoolName: '', city: '', role: '' });
+    setUserDetails({ email: '', schoolName: '', city: '', role: '', emailConsent: false });
     setScreen('welcome');
   };
 
@@ -139,7 +141,12 @@ function AssessmentContent() {
 
   return (
     <>
-      <Header progress={screen === 'question' ? progress : 0} currentQuestion={currentQuestion + 1} totalQuestions={questions.length} />
+      <Header 
+        progress={screen === 'question' ? progress : 0} 
+        currentQuestion={currentQuestion + 1} 
+        totalQuestions={questions.length}
+        showAnalyticsButton={true}
+      />
       <main className="flex-1 flex items-center justify-center p-6">
         <div id="content-container" className="w-full max-w-3xl">
           {screen === 'welcome' && <WelcomeScreen onStart={startAssessment} />}
@@ -176,35 +183,8 @@ function AssessmentContent() {
 
 // Sub-components for each screen
 
-function Header({ progress, currentQuestion, totalQuestions }: { progress: number; currentQuestion: number; totalQuestions: number }) {
-  return (
-    <header className="glass-dark sticky top-0 z-50 px-6 py-4">
-      <div className="max-w-5xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-24 h-14 rounded-xl glass flex items-center justify-center glow">
-            <OrtLogo className="h-12 w-32" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold gradient-text">מדד בשלות AI</h1>
-            <p className="text-sm text-blue-300/70">מודל ICMM לבתי ספר</p>
-          </div>
-        </div>
-        {progress > 0 && (
-          <div className="hidden md:flex items-center gap-3">
-            <span className="text-sm text-blue-300/70">התקדמות</span>
-            <div className="w-32 h-2 bg-white/10 rounded-full overflow-hidden">
-              <Progress value={progress} className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500 progress-glow" indicatorClassName="bg-transparent" />
-            </div>
-            <span className="text-sm font-medium text-blue-300">{currentQuestion}/{totalQuestions}</span>
-          </div>
-        )}
-      </div>
-    </header>
-  );
-}
-
 function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void }) {
-  const [details, setDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '' });
+  const [details, setDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '', emailConsent: false });
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,6 +226,17 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
           <div className="text-right">
             <Label htmlFor="email" className="block text-sm font-medium text-blue-300 mb-2">כתובת אימייל</Label>
             <Input type="email" id="email" value={details.email} onChange={handleInputChange} className="w-full px-4 py-3 bg-white/5 border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="לדוגמה: manager@school.edu.il" required />
+            <div className="flex items-center gap-2 mt-3 text-right">
+              <Label htmlFor="emailConsent" className="text-sm text-blue-300/80 leading-relaxed cursor-pointer">
+                אני מסכים/ה לקבל עדכונים באימייל מאורט
+              </Label>
+              <Checkbox 
+                id="emailConsent" 
+                checked={details.emailConsent} 
+                onCheckedChange={(checked) => setDetails(prev => ({...prev, emailConsent: checked === true}))}
+                className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+              />
+            </div>
           </div>
           <div className="text-right">
             <Label htmlFor="schoolName" className="block text-sm font-medium text-blue-300 mb-2">שם בית הספר</Label>
@@ -406,10 +397,6 @@ function ScoreComparisonSection({ currentScore }: { currentScore: number }) {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="text-center text-sm text-blue-300/60">
-            סה"כ {stats.totalAssessments} הערכות במערכת
           </div>
         </div>
 
@@ -662,8 +649,7 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
                 <OrtLogo className="w-14 h-10" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-bold text-[#004080]">דוח בשלות AI</DialogTitle>
-                <p className="text-sm text-gray-500">AI Intelligence Index - ICMM Model</p>
+                <DialogTitle className="text-xl font-bold text-[#004080]">דוח אורטקן AI</DialogTitle>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></Button>
@@ -710,7 +696,7 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
               <p className="text-amber-900 text-sm">{recommendation}</p>
             </div>
             <div className="text-center text-xs text-gray-400 pt-4 border-t">
-              <p>נוצר על ידי מערכת מדד בשלות AI | רשת אורט ישראל</p>
+              <p>נוצר על ידי אורטקן AI | רשת אורט ישראל</p>
               <p>{new Date().toLocaleDateString('he-IL')}</p>
             </div>
           </div>
