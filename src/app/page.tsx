@@ -658,8 +658,8 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
         <DialogHeader className="p-8 pb-0">
           <div className="flex items-center justify-between mb-6 pb-4 border-b">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[#004080] flex items-center justify-center">
-                <OrtLogo className="w-8 h-8" />
+              <div className="w-16 h-12 rounded-xl bg-[#004080] flex items-center justify-center">
+                <OrtLogo className="w-14 h-10" />
               </div>
               <div>
                 <DialogTitle className="text-xl font-bold text-[#004080]">דוח בשלות AI</DialogTitle>
