@@ -10,7 +10,6 @@ import { collection, addDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -481,7 +480,17 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
 
   const score = answers.reduce((a, b) => a + b, 0);
   const level = maturityLevels.find(l => score >= l.min && score <= l.max) || maturityLevels[0];
-  const maturityPercent = ((score - 10) / 40) * 100;
+  
+  // Calculate maturity percent based on actual level ranges (10-20, 21-30, 31-40, 41-47, 48-50)
+  const getMaturityPercent = (s: number) => {
+    if (s <= 10) return 0;
+    if (s <= 20) return ((s - 10) / 10) * 20; // Level 1: 0-20%
+    if (s <= 30) return 20 + ((s - 20) / 10) * 20; // Level 2: 20-40%
+    if (s <= 40) return 40 + ((s - 30) / 10) * 20; // Level 3: 40-60%
+    if (s <= 47) return 60 + ((s - 40) / 7) * 20; // Level 4: 60-80%
+    return 80 + ((s - 47) / 3) * 20; // Level 5: 80-100%
+  };
+  const maturityPercent = getMaturityPercent(score);
   
   const minScore = Math.min(...answers.filter(a => a > 0));
   const weakestIndex = answers.indexOf(minScore);
@@ -563,10 +572,14 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
               <div className="relative h-4 bg-slate-200 rounded-full overflow-hidden">
                 <div id="maturity-bar" className="absolute inset-y-0 right-0 bg-gradient-to-l from-[#004080] via-[#0066cc] to-[#00a0cc] rounded-full transition-all duration-1000" style={{ width: '0%' }}></div>
                 <div className="absolute inset-0 flex">
-                  {[...Array(4)].map((_, i) => <div key={i} className="flex-1 border-l border-slate-300"></div>)}
-                  <div className="flex-1"></div>
+                  <div className="border-l border-slate-300" style={{ width: '20%' }}></div>
+                  <div className="border-l border-slate-300" style={{ width: '20%' }}></div>
+                  <div className="border-l border-slate-300" style={{ width: '20%' }}></div>
+                  <div className="border-l border-slate-300" style={{ width: '20%' }}></div>
+                  <div style={{ width: '20%' }}></div>
                 </div>
               </div>
+              
             </div>
           </div>
         </div>
