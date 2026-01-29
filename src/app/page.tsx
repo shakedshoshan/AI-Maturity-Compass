@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { questions, maturityLevels } from '@/lib/assessment-data';
 import type { UserDetails } from '@/lib/types';
-import { generateRecommendations } from '@/ai/flows/personalized-recommendations';
 import { useFirestore, useAssessmentStats } from '@/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -479,7 +478,6 @@ function ScoreComparisonSection({ currentScore }: { currentScore: number }) {
 function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
   const [totalScore, setTotalScore] = React.useState(0);
   const [displayScore, setDisplayScore] = React.useState(0);
-  const [recommendation, setRecommendation] = React.useState('טוען המלצה...');
 
   const score = answers.reduce((a, b) => a + b, 0);
   const level = maturityLevels.find(l => score >= l.min && score <= l.max) || maturityLevels[0];
@@ -519,38 +517,8 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
       }, 300);
     }
 
-    const fetchRecommendation = async () => {
-      try {
-        const domainScores = questions.reduce((acc, q, i) => {
-          acc[q.category] = answers[i];
-          return acc;
-        }, {} as Record<string, number>);
-
-        const result = await generateRecommendations({
-          maturityLevel: level.name,
-          domainScores,
-          weakness: weakness,
-        });
-        setRecommendation(result.recommendation);
-      } catch (error) {
-        console.error("Failed to get recommendation:", error);
-        
-        // Provide a more helpful fallback recommendation based on the weakest domain
-        const fallbackRecommendation = questions[weakestIndex]?.quickWin || 
-          `מומלץ להתמקד בשיפור התחום "${weakness}" כדי להעלות את רמת הבשלות הכללית.`;
-        
-        setRecommendation(
-          `⚠️ שירות ההמלצות האישיות אינו זמין כעת. ` +
-          `המלצה כללית: ${fallbackRecommendation} ` +
-          `ניתן לנסות שוב מאוחר יותר לקבלת המלצה מותאמת אישית.`
-        );
-      }
-    };
-
-    fetchRecommendation();
-
     return () => clearInterval(scoreInterval);
-  }, [answers, score, level.name, weakness, maturityPercent]);
+  }, [answers, score, maturityPercent]);
 
   return (
     <div className="space-y-6 animate-slide-up">
@@ -630,17 +598,31 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
           <div className="flex-1">
             <div className="text-sm text-[#0088cc] font-semibold mb-1">השלב שלכם</div>
             <h3 className="text-2xl font-bold text-slate-800 mb-3">{level.name}</h3>
-            <p className="text-slate-600 leading-relaxed text-base">{level.desc}</p>
           </div>
         </div>
+        
+        {/* תמונת מצב */}
+        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-5 border border-blue-300 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <Activity className="w-5 h-5 text-blue-600"/>
+            </div>
+            <div>
+              <h4 className="font-bold text-blue-800 mb-2 text-lg">תמונת מצב</h4>
+              <p className="text-blue-900 text-base leading-relaxed">{level.situation}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* המלצה להמשך */}
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-300">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
               <TrendingUp className="w-5 h-5 text-amber-600"/>
             </div>
             <div>
-              <h4 className="font-bold text-amber-800 mb-2 text-lg">היעד הבא שלכם</h4>
-              <p className="text-amber-900 text-base leading-relaxed">{recommendation}</p>
+              <h4 className="font-bold text-amber-800 mb-2 text-lg">המלצה להמשך</h4>
+              <p className="text-amber-900 text-base leading-relaxed">{level.nextStep}</p>
             </div>
           </div>
         </div>

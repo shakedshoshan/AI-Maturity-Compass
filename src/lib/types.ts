@@ -12,6 +12,8 @@ export interface MaturityLevel {
   name: string;
   nameEn: string;
   desc: string;
+  situation: string;
+  nextStep: string;
 }
 
 export interface UserDetails {
