@@ -168,7 +168,6 @@ export default function AnalyticsPage() {
       <main className="flex-1 p-4 lg:p-3 lg:overflow-hidden">
         {/* Mobile Layout - scrollable */}
         <div className="lg:hidden max-w-7xl mx-auto space-y-4">
-          <OverallStatisticsMobile stats={stats} />
           <ScoreDistributionSectionMobile stats={stats} />
           <AverageRadarSectionMobile stats={stats} />
           <MaturityLevelSectionMobile stats={stats} />
@@ -176,11 +175,8 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Desktop Layout - single screen */}
-        <div className="hidden lg:grid h-full max-w-[1600px] mx-auto grid-rows-[auto_1fr_1fr] gap-3">
-          {/* Row 1: Overall Statistics - compact */}
-          <OverallStatistics stats={stats} />
-
-          {/* Row 2: Charts side by side */}
+        <div className="hidden lg:grid h-full max-w-[1600px] mx-auto grid-rows-[1fr_1fr] gap-3">
+          {/* Row 1: Charts side by side */}
           <div className="grid grid-cols-2 gap-3 min-h-0">
             <ScoreDistributionSection stats={stats} />
             <AverageRadarSection stats={stats} />
@@ -193,49 +189,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </main>
-    </div>
-  );
-}
-
-function OverallStatistics({ stats }: { stats: AnalyticsStats }) {
-  const highestScore = Math.max(...stats.recentAssessments.map(a => a.totalScore), 0);
-  const lowestScore = Math.min(...stats.recentAssessments.map(a => a.totalScore), 50);
-  
-  return (
-    <div className="glass-dark rounded-2xl p-4">
-      <div className="grid grid-cols-4 gap-3">
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-3 border border-blue-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Users className="w-4 h-4 text-[#004080]" />
-            <span className="text-xs text-[#004080] font-semibold">סה"כ הערכות</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-800">{stats.totalAssessments}</div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-purple-600" />
-            <span className="text-xs text-purple-600 font-semibold">ציון ממוצע</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-800">{stats.averageScore}<span className="text-xs text-slate-500 mr-1">/50</span></div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="w-4 h-4 text-emerald-600" />
-            <span className="text-xs text-emerald-600 font-semibold">ציון גבוה</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-800">{highestScore}</div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Calendar className="w-4 h-4 text-amber-600" />
-            <span className="text-xs text-amber-600 font-semibold">ציון נמוך</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-800">{lowestScore}</div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -391,50 +344,6 @@ function DemographicsSection({ stats }: { stats: AnalyticsStats }) {
 }
 
 // ==================== MOBILE COMPONENTS ====================
-
-function OverallStatisticsMobile({ stats }: { stats: AnalyticsStats }) {
-  const highestScore = Math.max(...stats.recentAssessments.map(a => a.totalScore), 0);
-  const lowestScore = Math.min(...stats.recentAssessments.map(a => a.totalScore), 50);
-  
-  return (
-    <div className="glass-dark rounded-3xl p-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-[#004080]" />
-            <span className="text-sm text-[#004080] font-semibold">סה"כ הערכות</span>
-          </div>
-          <div className="text-3xl font-bold text-slate-800">{stats.totalAssessments}</div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-5 h-5 text-purple-600" />
-            <span className="text-sm text-purple-600 font-semibold">ציון ממוצע</span>
-          </div>
-          <div className="text-3xl font-bold text-slate-800">{stats.averageScore}</div>
-          <div className="text-xs text-slate-500 mt-1">מתוך 50</div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-5 h-5 text-emerald-600" />
-            <span className="text-sm text-emerald-600 font-semibold">ציון גבוה</span>
-          </div>
-          <div className="text-3xl font-bold text-slate-800">{highestScore}</div>
-        </div>
-        
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-5 h-5 text-amber-600" />
-            <span className="text-sm text-amber-600 font-semibold">ציון נמוך</span>
-          </div>
-          <div className="text-3xl font-bold text-slate-800">{lowestScore}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ScoreDistributionSectionMobile({ stats }: { stats: AnalyticsStats }) {
   return (
