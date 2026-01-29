@@ -34,7 +34,7 @@ export default function RootLayout({
       </head>
       <body
         className={cn(
-          'h-full overflow-auto bg-gradient-to-br from-[#0a0a1a] via-[#001030] to-[#0a0a1a] text-white font-body antialiased'
+          'h-full overflow-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 text-slate-900 font-body antialiased'
         )}
       >
         <FirebaseClientProvider>

@@ -127,12 +127,12 @@ export default function AnalyticsPage() {
 
   if (stats.loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
         <Header title="אורטקן AI" maxWidth="7xl" />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="glass-dark rounded-3xl p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">טוען נתונים...</h2>
-            <p className="text-blue-300/70">אנא המתן בזמן שאנחנו טוענים את נתוני הניתוח</p>
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">טוען נתונים...</h2>
+            <p className="text-slate-500">אנא המתן בזמן שאנחנו טוענים את נתוני הניתוח</p>
           </div>
         </main>
       </div>
@@ -141,18 +141,18 @@ export default function AnalyticsPage() {
 
   if (stats.error || stats.totalAssessments === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
         <Header title="אורטקן AI" maxWidth="7xl" />
         <main className="flex-1 flex items-center justify-center p-6">
           <div className="glass-dark rounded-3xl p-8 text-center">
-            <h2 className="text-2xl font-bold text-white mb-4">אין נתונים זמינים</h2>
-            <p className="text-blue-300/70 mb-6">
+            <h2 className="text-2xl font-bold text-slate-800 mb-4">אין נתונים זמינים</h2>
+            <p className="text-slate-500 mb-6">
               {stats.totalAssessments === 0 
                 ? 'עדיין לא בוצעו הערכות במערכת' 
                 : 'לא ניתן לטעון נתוני ניתוח'}
             </p>
             <Link href="/">
-              <Button className="bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-xl">
+              <Button className="bg-gradient-to-r from-[#004080] to-[#0066cc] text-white rounded-xl hover:scale-105 transition-all focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2">
                 חזרה לדף הבית
               </Button>
             </Link>
@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
       <Header title="אורטקן AI" maxWidth="7xl" showHomeButton={true} />
       <main className="flex-1 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
           <div className="glass-dark rounded-3xl p-8">
             <div>
               <h1 className="text-3xl font-bold gradient-text mb-2">ניתוח נתונים כללי</h1>
-              <p className="text-blue-300/70">מבט מקיף על כל ההערכות במערכת</p>
+              <p className="text-slate-500">מבט מקיף על כל ההערכות במערכת</p>
             </div>
           </div>
 
@@ -202,41 +202,41 @@ function OverallStatistics({ stats }: { stats: AnalyticsStats }) {
   
   return (
     <div className="glass-dark rounded-3xl p-8">
-      <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-        <Activity className="w-6 h-6 text-blue-400" /> סטטיסטיקות כלליות
+      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+        <Activity className="w-6 h-6 text-[#004080]" /> סטטיסטיקות כלליות
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500/20 to-cyan-400/20 rounded-xl p-6 border border-blue-400/30">
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Users className="w-5 h-5 text-blue-400" />
-            <span className="text-sm text-blue-400 font-medium">סה"כ הערכות</span>
+            <Users className="w-5 h-5 text-[#004080]" />
+            <span className="text-sm text-[#004080] font-semibold">סה"כ הערכות</span>
           </div>
-          <div className="text-3xl font-bold text-white">{stats.totalAssessments}</div>
+          <div className="text-3xl font-bold text-slate-800">{stats.totalAssessments}</div>
         </div>
         
-        <div className="bg-gradient-to-br from-purple-500/20 to-pink-400/20 rounded-xl p-6 border border-purple-400/30">
+        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <TrendingUp className="w-5 h-5 text-purple-400" />
-            <span className="text-sm text-purple-400 font-medium">ציון ממוצע</span>
+            <TrendingUp className="w-5 h-5 text-purple-600" />
+            <span className="text-sm text-purple-600 font-semibold">ציון ממוצע</span>
           </div>
-          <div className="text-3xl font-bold text-white">{stats.averageScore}</div>
-          <div className="text-xs text-purple-300/70 mt-1">מתוך 50</div>
+          <div className="text-3xl font-bold text-slate-800">{stats.averageScore}</div>
+          <div className="text-xs text-slate-500 mt-1">מתוך 50</div>
         </div>
         
-        <div className="bg-gradient-to-br from-emerald-500/20 to-teal-400/20 rounded-xl p-6 border border-emerald-400/30">
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Target className="w-5 h-5 text-emerald-400" />
-            <span className="text-sm text-emerald-400 font-medium">ציון הגבוה ביותר</span>
+            <Target className="w-5 h-5 text-emerald-600" />
+            <span className="text-sm text-emerald-600 font-semibold">ציון הגבוה ביותר</span>
           </div>
-          <div className="text-3xl font-bold text-white">{highestScore}</div>
+          <div className="text-3xl font-bold text-slate-800">{highestScore}</div>
         </div>
         
-        <div className="bg-gradient-to-br from-amber-500/20 to-orange-400/20 rounded-xl p-6 border border-amber-400/30">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200 shadow-sm">
           <div className="flex items-center gap-3 mb-2">
-            <Calendar className="w-5 h-5 text-amber-400" />
-            <span className="text-sm text-amber-400 font-medium">ציון הנמוך ביותר</span>
+            <Calendar className="w-5 h-5 text-amber-600" />
+            <span className="text-sm text-amber-600 font-semibold">ציון הנמוך ביותר</span>
           </div>
-          <div className="text-3xl font-bold text-white">{lowestScore}</div>
+          <div className="text-3xl font-bold text-slate-800">{lowestScore}</div>
         </div>
       </div>
     </div>
@@ -246,8 +246,8 @@ function OverallStatistics({ stats }: { stats: AnalyticsStats }) {
 function ScoreDistributionSection({ stats }: { stats: AnalyticsStats }) {
   return (
     <div className="glass-dark rounded-3xl p-8">
-      <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-        <BarChart className="w-6 h-6 text-blue-400" /> התפלגות ציונים
+      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+        <BarChart className="w-6 h-6 text-[#004080]" /> התפלגות ציונים
       </h3>
       <div className="h-[350px]">
         <ScoreDistributionChart 
@@ -258,12 +258,12 @@ function ScoreDistributionSection({ stats }: { stats: AnalyticsStats }) {
       </div>
       <div className="flex justify-center gap-6 mt-4 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-blue-500/50 border border-blue-400"></div>
-          <span className="text-blue-300/70">התפלגות</span>
+          <div className="w-3 h-3 rounded bg-[#004080]/50 border border-[#004080]"></div>
+          <span className="text-slate-600">התפלגות</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded border border-emerald-400 border-dashed"></div>
-          <span className="text-blue-300/70">ממוצע</span>
+          <div className="w-3 h-3 rounded border border-emerald-500 border-dashed"></div>
+          <span className="text-slate-600">ממוצע</span>
         </div>
       </div>
     </div>
@@ -273,20 +273,20 @@ function ScoreDistributionSection({ stats }: { stats: AnalyticsStats }) {
 function AverageRadarSection({ stats }: { stats: AnalyticsStats }) {
   return (
     <div className="glass-dark rounded-3xl p-8">
-      <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-        <Target className="w-6 h-6 text-blue-400" /> מפת תחומים - ביצועים ממוצעים
+      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+        <Target className="w-6 h-6 text-[#004080]" /> מפת תחומים - ביצועים ממוצעים
       </h3>
       <div className="relative h-[350px]">
         <RadarChart answers={stats.averageAnswers} />
       </div>
       <div className="flex justify-center gap-6 mt-4 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-blue-500/50 border border-blue-400"></div>
-          <span className="text-blue-300/70">ממוצע כללי</span>
+          <div className="w-4 h-4 rounded bg-[#004080]/50 border border-[#004080]"></div>
+          <span className="text-slate-600">ממוצע כללי</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border border-emerald-400 border-dashed"></div>
-          <span className="text-blue-300/70">יעד (רמה 5)</span>
+          <div className="w-4 h-4 rounded border border-emerald-500 border-dashed"></div>
+          <span className="text-slate-600">יעד (רמה 5)</span>
         </div>
       </div>
     </div>
@@ -299,25 +299,25 @@ function MaturityLevelSection({ stats }: { stats: AnalyticsStats }) {
 
   return (
     <div className="glass-dark rounded-3xl p-8">
-      <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-        <TrendingUp className="w-6 h-6 text-blue-400" /> התפלגות רמות בשלות
+      <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+        <TrendingUp className="w-6 h-6 text-[#004080]" /> התפלגות רמות בשלות
       </h3>
       <div className="space-y-4">
         {sortedLevels.map(([level, count], index) => {
           const percentage = Math.round((count / stats.totalAssessments) * 100);
           return (
-            <div key={level} className="bg-white/5 rounded-xl p-4">
+            <div key={level} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-white font-medium">{level}</span>
+                <span className="text-slate-800 font-semibold">{level}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-300 text-sm">{count} הערכות</span>
-                  <span className="text-blue-400 font-bold">{percentage}%</span>
+                  <span className="text-slate-500 text-sm">{count} הערכות</span>
+                  <span className="text-[#004080] font-bold">{percentage}%</span>
                 </div>
               </div>
               <Progress 
                 value={percentage} 
-                className="h-2 bg-white/10" 
-                indicatorClassName="bg-gradient-to-r from-blue-500 to-cyan-400"
+                className="h-2 bg-slate-200" 
+                indicatorClassName="bg-gradient-to-r from-[#004080] to-[#00a0cc]"
               />
             </div>
           );
@@ -340,20 +340,20 @@ function DemographicsSection({ stats }: { stats: AnalyticsStats }) {
     <div className="grid md:grid-cols-2 gap-6">
       {/* Cities */}
       <div className="glass-dark rounded-3xl p-8">
-        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-          <MapPin className="w-6 h-6 text-blue-400" /> התפלגות לפי ערים
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+          <MapPin className="w-6 h-6 text-[#004080]" /> התפלגות לפי ערים
         </h3>
         <div className="space-y-3">
           {topCities.map(([city, count]) => {
             const percentage = Math.round((count / stats.totalAssessments) * 100);
             return (
               <div key={city} className="flex items-center justify-between">
-                <span className="text-blue-200">{city}</span>
+                <span className="text-slate-700 font-medium">{city}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-300 text-sm">{count}</span>
-                  <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
+                  <span className="text-slate-500 text-sm">{count}</span>
+                  <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                      className="h-full bg-gradient-to-r from-[#004080] to-[#00a0cc] rounded-full"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -366,20 +366,20 @@ function DemographicsSection({ stats }: { stats: AnalyticsStats }) {
 
       {/* Roles */}
       <div className="glass-dark rounded-3xl p-8">
-        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-          <Briefcase className="w-6 h-6 text-blue-400" /> התפלגות לפי תפקידים
+        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+          <Briefcase className="w-6 h-6 text-[#004080]" /> התפלגות לפי תפקידים
         </h3>
         <div className="space-y-3">
           {topRoles.map(([role, count]) => {
             const percentage = Math.round((count / stats.totalAssessments) * 100);
             return (
               <div key={role} className="flex items-center justify-between">
-                <span className="text-blue-200">{role}</span>
+                <span className="text-slate-700 font-medium">{role}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-blue-300 text-sm">{count}</span>
-                  <div className="w-16 h-2 bg-white/10 rounded-full overflow-hidden">
+                  <span className="text-slate-500 text-sm">{count}</span>
+                  <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-pink-400 rounded-full"
+                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
@@ -392,4 +392,3 @@ function DemographicsSection({ stats }: { stats: AnalyticsStats }) {
     </div>
   );
 }
-
