@@ -74,7 +74,7 @@ export default function Header({
           <div className="flex items-center gap-4">
             <OrtLogo className="h-12 w-auto" />
             <div>
-              <h1 className="text-xl font-bold gradient-text">מה בית הספר שלכם צריך בכדי להטמיע בינה מלאכותית בצורה אחראית פדגוגית ומשמעותית</h1>
+              <h1 className="text-xl font-bold gradient-text">מה בית הספר שלכם צריך בכדי להטמיע בינה מלאכותית בצורה אחראית פדגוגית ומשמעותית?</h1>
             </div>
           </div>
           <div className="absolute left-0 flex items-center gap-3">
