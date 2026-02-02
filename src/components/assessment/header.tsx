@@ -63,7 +63,7 @@ export default function Header({
           {/* Logo and title on the right for mobile */}
           <div className="flex items-center gap-3">
             <div>
-              <h1 className="text-lg font-bold gradient-text">מה בית הספר שלכם צריך בכדי להטמיע בינה מלאכותית בצורה אחראית פדגוגית ומשמעותית?</h1>
+              <h1 className="text-lg font-bold gradient-text">מה בית הספר שלכם צריך בכדי להטמיע בינה מלאכותית בצורה אחראית פדגוגית ומשמעותית</h1>
             </div>
             <OrtLogo className="h-10 w-auto" />
           </div>
