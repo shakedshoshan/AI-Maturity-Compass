@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { questions, maturityLevels } from '@/lib/assessment-data';
+import { questions } from '@/lib/assessment-data';
 import type { AssessmentRecord } from '@/lib/types';
 import { useFirestore } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -128,7 +128,7 @@ export default function AnalyticsPage() {
   if (stats.loading) {
     return (
       <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex flex-col overflow-hidden">
-        <Header title="אורטקן AI" maxWidth="7xl" />
+        <Header title="בית ספר מוסמך AI" maxWidth="7xl" />
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="glass-dark rounded-2xl p-6 text-center">
             <h2 className="text-xl font-bold text-slate-800 mb-2">טוען נתונים...</h2>
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
   if (stats.error || stats.totalAssessments === 0) {
     return (
       <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex flex-col overflow-hidden">
-        <Header title="אורטקן AI" maxWidth="7xl" />
+        <Header title="בית ספר מוסמך AI" maxWidth="7xl" />
         <main className="flex-1 flex items-center justify-center p-4">
           <div className="glass-dark rounded-2xl p-6 text-center">
             <h2 className="text-xl font-bold text-slate-800 mb-2">אין נתונים זמינים</h2>
@@ -164,7 +164,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen lg:h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex flex-col lg:overflow-hidden">
-      <Header title="אורטקן AI" maxWidth="7xl" showHomeButton={true} />
+      <Header title="בית ספר מוסמך AI" maxWidth="7xl" showHomeButton={true} />
       <main className="flex-1 p-4 lg:p-3 lg:overflow-hidden">
         {/* Mobile Layout - scrollable */}
         <div className="lg:hidden max-w-7xl mx-auto space-y-4">

@@ -20,7 +20,7 @@ export default function Header({
   progress = 0, 
   currentQuestion, 
   totalQuestions,
-  title = 'אורטקן AI',
+  title = 'בית ספר מוסמך AI',
   maxWidth = '5xl',
   showAnalyticsButton = false,
   showHomeButton = false
@@ -74,7 +74,7 @@ export default function Header({
           <div className="flex items-center gap-4">
             <OrtLogo className="h-12 w-auto" />
             <div>
-              <h1 className="text-xl font-bold gradient-text">מה בית הספר שלכם צריך בכדי להטמיע בינה מלאכותית בצורה אחראית פדגוגית ומשמעותית?</h1>
+              <h1 className="text-xl font-bold gradient-text">בית ספר מוסמך AI</h1>
             </div>
           </div>
           <div className="absolute left-0 flex items-center gap-3">

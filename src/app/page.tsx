@@ -703,7 +703,7 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
             <div className="flex items-center gap-3">
               <OrtLogo className="h-10 w-auto" />
               <div>
-                <DialogTitle className="text-xl font-bold text-[#004080]">דוח אורטקן AI</DialogTitle>
+                <DialogTitle className="text-xl font-bold text-[#004080]">דוח בית ספר מוסמך AI</DialogTitle>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose} className="text-slate-400 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-[#004080]"><X className="w-6 h-6" /></Button>
@@ -750,7 +750,7 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
               <p className="text-amber-900 text-sm">{recommendation}</p>
             </div>
             <div className="text-center text-xs text-slate-400 pt-4 border-t border-slate-200">
-              <p>נוצר על ידי אורטקן AI | רשת אורט ישראל</p>
+              <p>נוצר על ידי בית ספר מוסמך AI | רשת אורט ישראל</p>
               <p>{new Date().toLocaleDateString('he-IL')}</p>
             </div>
           </div>
