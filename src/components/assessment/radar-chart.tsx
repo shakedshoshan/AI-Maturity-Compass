@@ -4,13 +4,23 @@ import { questions } from '@/lib/assessment-data';
 import { Radar, RadarChart as RechartsRadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface RadarChartProps {
-  answers: number[];
+  answers: (number | string)[];
 }
 
 const RadarChart = ({ answers }: RadarChartProps) => {
-  const chartData = questions.map((q, i) => ({
-    subject: q.category,
-    A: answers[i],
+  const categoriesMap = new Map<string, { sum: number; count: number }>();
+  
+  questions.forEach((q, i) => {
+    if (q.type !== 'open' && typeof answers[i] === 'number') {
+      const val = answers[i] as number;
+      const current = categoriesMap.get(q.category) || { sum: 0, count: 0 };
+      categoriesMap.set(q.category, { sum: current.sum + val, count: current.count + 1 });
+    }
+  });
+
+  const chartData = Array.from(categoriesMap.entries()).map(([category, stats]) => ({
+    subject: category,
+    A: stats.count > 0 ? Number((stats.sum / stats.count).toFixed(1)) : 0,
     B: 5, // Benchmark
   }));
 

@@ -26,7 +26,7 @@ export function useAssessmentStats(currentScore: number): AssessmentStats {
   const assessmentsQuery = useMemo(() => {
     if (!firestore) return null;
     try {
-      return query(collection(firestore, 'assessments'), orderBy('createdAt', 'desc'));
+      return query(collection(firestore, 'new-assessments'), orderBy('createdAt', 'desc'));
     } catch (error) {
       console.error('Error creating assessments query:', error);
       return null;
@@ -41,7 +41,7 @@ export function useAssessmentStats(currentScore: number): AssessmentStats {
         totalAssessments: 0,
         averageScore: 0,
         percentile: 0,
-        scoreDistribution: Array(10).fill(0), // 10 buckets: 0-5, 6-10, 11-15, ..., 46-50
+        scoreDistribution: Array(11).fill(0), // 11 buckets: 0-9, 10-19, ..., 100-105
         loading,
         error,
       };
@@ -56,10 +56,10 @@ export function useAssessmentStats(currentScore: number): AssessmentStats {
     const scoresBelow = scores.filter(s => s < currentScore).length;
     const percentile = scores.length > 0 ? Math.round((scoresBelow / scores.length) * 100) : 0;
 
-    // Calculate score distribution (10 buckets: 0-5, 6-10, 11-15, ..., 46-50)
-    const distribution = Array(10).fill(0);
+    // Calculate score distribution (11 buckets: 0-9, 10-19, ..., 100-105)
+    const distribution = Array(11).fill(0);
     assessments.forEach(assessment => {
-      const bucket = Math.min(Math.floor(assessment.totalScore / 5), 9);
+      const bucket = Math.min(Math.floor(assessment.totalScore / 10), 10);
       distribution[bucket]++;
     });
 

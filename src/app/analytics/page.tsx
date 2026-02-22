@@ -36,7 +36,7 @@ function useAnalyticsStats(): AnalyticsStats {
   const assessmentsQuery = React.useMemo(() => {
     if (!firestore) return null;
     try {
-      return query(collection(firestore, 'assessments'), orderBy('createdAt', 'desc'));
+      return query(collection(firestore, 'new-assessments'), orderBy('createdAt', 'desc'));
     } catch (error) {
       console.error('Error creating assessments query:', error);
       return null;
@@ -65,22 +65,26 @@ function useAnalyticsStats(): AnalyticsStats {
     const totalScore = assessments.reduce((sum, a) => sum + a.totalScore, 0);
     const averageScore = totalScore / assessments.length;
 
-    // Calculate score distribution (10 buckets: 0-5, 6-10, 11-15, ..., 46-50)
-    const scoreDistribution = Array(10).fill(0);
+    // Calculate score distribution (11 buckets: 0-9, 10-19, ..., 100-105)
+    const scoreDistribution = Array(11).fill(0);
     assessments.forEach(assessment => {
-      const bucket = Math.min(Math.floor(assessment.totalScore / 5), 9);
+      const bucket = Math.min(Math.floor(assessment.totalScore / 10), 10);
       scoreDistribution[bucket]++;
     });
 
     // Calculate average answers per question
     const averageAnswers = Array(questions.length).fill(0);
+    const answersCount = Array(questions.length).fill(0);
     assessments.forEach(assessment => {
       assessment.answers.forEach((answer, index) => {
-        averageAnswers[index] += answer;
+        if (typeof answer === 'number' && answer > 0) {
+          averageAnswers[index] += answer;
+          answersCount[index]++;
+        }
       });
     });
     averageAnswers.forEach((sum, index) => {
-      averageAnswers[index] = sum / assessments.length;
+      averageAnswers[index] = answersCount[index] > 0 ? sum / answersCount[index] : 0;
     });
 
     // Calculate maturity level distribution

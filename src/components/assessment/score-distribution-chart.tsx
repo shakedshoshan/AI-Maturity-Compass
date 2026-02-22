@@ -11,8 +11,8 @@ interface ScoreDistributionChartProps {
 const ScoreDistributionChart = ({ distribution, currentScore, averageScore }: ScoreDistributionChartProps) => {
   // Transform distribution data for chart
   const chartData = distribution.map((count, index) => {
-    const minScore = index * 5;
-    const maxScore = (index + 1) * 5;
+    const minScore = index * 10;
+    const maxScore = index === 10 ? 105 : (index + 1) * 10 - 1;
     return {
       range: `${minScore}-${maxScore}`,
       count,
@@ -22,7 +22,7 @@ const ScoreDistributionChart = ({ distribution, currentScore, averageScore }: Sc
   });
 
   // Find which bucket the current score falls into
-  const currentBucket = Math.min(Math.floor(currentScore / 5), 9);
+  const currentBucket = Math.min(Math.floor(currentScore / 10), 10);
   const maxCount = Math.max(...distribution, 1); // Avoid division by zero
 
   return (
@@ -73,7 +73,7 @@ const ScoreDistributionChart = ({ distribution, currentScore, averageScore }: Sc
         {/* Reference line for average score */}
         {averageScore > 0 && chartData.length > 0 && (
           <ReferenceLine 
-            x={chartData[Math.min(Math.floor(averageScore / 5), 9)].range}
+            x={chartData[Math.min(Math.floor(averageScore / 10), 10)]?.range}
             stroke="rgba(16, 185, 129, 0.8)"
             strokeDasharray="3 3"
             strokeWidth={2}

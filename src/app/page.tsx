@@ -24,6 +24,21 @@ import Header from '@/components/assessment/header';
 
 type Screen = 'welcome' | 'question' | 'results';
 
+const emptyUserDetails: UserDetails = {
+  institutionName: '',
+  principalName: '',
+  ictCoordinatorName: '',
+  innovationCoordinatorName: '',
+  ageGroups: '',
+  totalStudents: '',
+  percentMaleStudents: '',
+  percentFemaleStudents: '',
+  numberOfTeachers: '',
+  totalDevices: '',
+  email: '',
+  emailConsent: false,
+};
+
 // Main Application Component
 export default function AssessmentPage() {
   return <AssessmentContent />;
@@ -32,8 +47,8 @@ export default function AssessmentPage() {
 function AssessmentContent() {
   const [screen, setScreen] = React.useState<Screen>('welcome');
   const [currentQuestion, setCurrentQuestion] = React.useState(0);
-  const [answers, setAnswers] = React.useState<number[]>(() => Array(questions.length).fill(0));
-  const [userDetails, setUserDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '', emailConsent: false });
+  const [answers, setAnswers] = React.useState<(number | string)[]>(() => questions.map(q => q.type === 'open' ? '' : 0));
+  const [userDetails, setUserDetails] = React.useState<UserDetails>(emptyUserDetails);
 
   const [isSummaryModalOpen, setSummaryModalOpen] = React.useState(false);
   
@@ -53,7 +68,7 @@ function AssessmentContent() {
     setScreen('question');
   };
 
-  const selectRating = (rating: number) => {
+  const selectRating = (rating: number | string) => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = rating;
     setAnswers(newAnswers);
@@ -76,13 +91,13 @@ function AssessmentContent() {
 
   const restartAssessment = () => {
     setCurrentQuestion(0);
-    setAnswers(Array(questions.length).fill(0));
-    setUserDetails({ email: '', schoolName: '', city: '', role: '', emailConsent: false });
+    setAnswers(questions.map(q => q.type === 'open' ? '' : 0));
+    setUserDetails(emptyUserDetails);
     setScreen('welcome');
   };
 
   const saveAssessment = () => {
-    const totalScore = answers.reduce((a, b) => a + b, 0);
+    const totalScore = answers.reduce((a, b) => (typeof a === 'number' ? a : 0) + (typeof b === 'number' ? b : 0), 0) as number;
     const level = maturityLevels.find(l => totalScore >= l.min && totalScore <= l.max);
     
     if (!level) {
@@ -109,7 +124,7 @@ function AssessmentContent() {
     };
     
     try {
-      const assessmentCollection = collection(firestore, 'assessments');
+      const assessmentCollection = collection(firestore, 'new-assessments');
       addDoc(assessmentCollection, assessmentData)
         .then(() => {
           toast({
@@ -160,10 +175,8 @@ function AssessmentContent() {
             />
           )}
           {screen === 'results' && (
-            <ResultsScreen
-              answers={answers}
+            <ThankYouScreen
               onRestart={restartAssessment}
-              onShowSummary={() => setSummaryModalOpen(true)}
             />
           )}
         </div>
@@ -182,8 +195,8 @@ function AssessmentContent() {
 // Sub-components for each screen
 
 function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void }) {
-  const [details, setDetails] = React.useState<UserDetails>({ email: '', schoolName: '', city: '', role: '', emailConsent: false });
-  
+  const [details, setDetails] = React.useState<UserDetails>(emptyUserDetails);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onStart(details);
@@ -191,8 +204,8 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setDetails(prev => ({...prev, [id]: value}));
-  }
+    setDetails(prev => ({ ...prev, [id]: value }));
+  };
 
   const stats = [
     { value: 10, label: 'תחומים' },
@@ -200,6 +213,10 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
     { value: 50, label: 'ניקוד מקסימלי' },
     { value: 5, label: 'דקות' },
   ];
+
+  const inputClass = "w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-[#004080] focus:ring-2 focus:ring-[#004080]/20 transition-all placeholder:text-slate-400";
+  const labelRequired = "block text-sm font-semibold text-slate-700 mb-2";
+  const labelOptional = "block text-sm font-medium text-slate-600 mb-2";
 
   return (
     <div className="animate-scale-in">
@@ -214,77 +231,72 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {stats.map((stat, i) => (
-             <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
-                <div className="text-3xl font-bold text-[#004080]">{stat.value}</div>
-                <div className="text-sm text-slate-600 font-medium">{stat.label}</div>
+            <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div className="text-3xl font-bold text-[#004080]">{stat.value}</div>
+              <div className="text-sm text-slate-600 font-medium">{stat.label}</div>
             </div>
           ))}
         </div>
         <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8 space-y-4">
+          <p className="text-sm text-slate-600 text-center mb-4">מלא/י את פרטי המוסד כפי שמופיעים בשאלון. שדות חובה: שם המוסד ושם המנהל/ת.</p>
+
           <div className="text-right">
-            <Label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">כתובת אימייל</Label>
-            <Input 
-              type="email" 
-              id="email" 
-              value={details.email} 
-              onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-[#004080] focus:ring-2 focus:ring-[#004080]/20 transition-all placeholder:text-slate-400" 
-              placeholder="לדוגמה: manager@school.edu.il" 
-              required 
-              aria-describedby="email-description"
-            />
-            <div className="flex items-center gap-2 mt-3 text-right">
-              <Label htmlFor="emailConsent" className="text-sm text-slate-600 leading-relaxed cursor-pointer">
-                אני מסכים/ה לקבל עדכונים באימייל מאורט
-              </Label>
-              <Checkbox 
-                id="emailConsent" 
-                checked={details.emailConsent} 
-                onCheckedChange={(checked) => setDetails(prev => ({...prev, emailConsent: checked === true}))}
-                className="border-slate-400 data-[state=checked]:bg-[#004080] data-[state=checked]:border-[#004080]"
-              />
+            <Label htmlFor="institutionName" className={labelRequired}>שם המוסד החינוכי *</Label>
+            <Input type="text" id="institutionName" value={details.institutionName} onChange={handleInputChange} className={inputClass} placeholder="לדוגמה: אורט תל אביב" required />
+          </div>
+          <div className="text-right">
+            <Label htmlFor="principalName" className={labelRequired}>שם מלא - מנהל/ת *</Label>
+            <Input type="text" id="principalName" value={details.principalName} onChange={handleInputChange} className={inputClass} placeholder="שם מלא של מנהל/ת בית הספר" required />
+          </div>
+
+          <div className="border-t border-slate-200 pt-4 space-y-4">
+            <p className="text-xs text-slate-500 text-center mb-2">שדות אופציונליים</p>
+            <div className="text-right">
+              <Label htmlFor="ictCoordinatorName" className={labelOptional}>שם מלא - רכז/ת התקשוב</Label>
+              <Input type="text" id="ictCoordinatorName" value={details.ictCoordinatorName ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
+            </div>
+            <div className="text-right">
+              <Label htmlFor="innovationCoordinatorName" className={labelOptional}>שם מלא - רכז/ת חדשנות / &apos;פיוצ&apos;ריסט&apos; (אם קייים)</Label>
+              <Input type="text" id="innovationCoordinatorName" value={details.innovationCoordinatorName ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
+            </div>
+            <div className="text-right">
+              <Label htmlFor="ageGroups" className={labelOptional}>שכבות הגיל במוסד החינוכי</Label>
+              <Input type="text" id="ageGroups" value={details.ageGroups ?? ''} onChange={handleInputChange} className={inputClass} placeholder="לדוגמה: ז'-יב'" />
+            </div>
+            <div className="text-right">
+              <Label htmlFor="totalStudents" className={labelOptional}>סה&quot;כ מס&#39; התלמידים/ות</Label>
+              <Input type="text" inputMode="numeric" id="totalStudents" value={details.totalStudents ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-right">
+              <div>
+                <Label htmlFor="percentMaleStudents" className={labelOptional}>% התלמידים הבנים</Label>
+                <Input type="text" inputMode="numeric" id="percentMaleStudents" value={details.percentMaleStudents ?? ''} onChange={handleInputChange} className={inputClass} placeholder="%" />
+              </div>
+              <div>
+                <Label htmlFor="percentFemaleStudents" className={labelOptional}>% התלמידות הבנות</Label>
+                <Input type="text" inputMode="numeric" id="percentFemaleStudents" value={details.percentFemaleStudents ?? ''} onChange={handleInputChange} className={inputClass} placeholder="%" />
+              </div>
+            </div>
+            <div className="text-right">
+              <Label htmlFor="numberOfTeachers" className={labelOptional}>מס&#39; המורים/ות</Label>
+              <Input type="text" inputMode="numeric" id="numberOfTeachers" value={details.numberOfTeachers ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
+            </div>
+            <div className="text-right">
+              <Label htmlFor="totalDevices" className={labelOptional}>סה&quot;כ מס&#39; אמצעי הקצה בבעלות בית הספר (מחשבים נייחים, ניידים, טבלטים)</Label>
+              <Input type="text" inputMode="numeric" id="totalDevices" value={details.totalDevices ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
             </div>
           </div>
-          <div className="text-right">
-            <Label htmlFor="schoolName" className="block text-sm font-semibold text-slate-700 mb-2">שם בית הספר</Label>
-            <Input 
-              type="text" 
-              id="schoolName" 
-              value={details.schoolName} 
-              onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-[#004080] focus:ring-2 focus:ring-[#004080]/20 transition-all placeholder:text-slate-400" 
-              placeholder="לדוגמה: אורט תל אביב" 
-              required 
-            />
+
+          <div className="text-right border-t border-slate-200 pt-4">
+            <Label htmlFor="email" className={labelOptional}>כתובת אימייל (אופציונלי)</Label>
+            <Input type="email" id="email" value={details.email ?? ''} onChange={handleInputChange} className={inputClass} placeholder="manager@school.edu.il" />
+            <div className="flex items-center gap-2 mt-3 text-right">
+              <Label htmlFor="emailConsent" className="text-sm text-slate-600 leading-relaxed cursor-pointer">אני מסכים/ה לקבל עדכונים באימייל מאורט</Label>
+              <Checkbox id="emailConsent" checked={details.emailConsent} onCheckedChange={(checked) => setDetails(prev => ({ ...prev, emailConsent: checked === true }))} className="border-slate-400 data-[state=checked]:bg-[#004080] data-[state=checked]:border-[#004080]" />
+            </div>
           </div>
-          <div className="text-right">
-            <Label htmlFor="city" className="block text-sm font-semibold text-slate-700 mb-2">עיר</Label>
-            <Input 
-              type="text" 
-              id="city" 
-              value={details.city} 
-              onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-[#004080] focus:ring-2 focus:ring-[#004080]/20 transition-all placeholder:text-slate-400" 
-              placeholder="לדוגמה: תל אביב" 
-              required 
-            />
-          </div>
-          <div className="text-right">
-            <Label htmlFor="role" className="block text-sm font-semibold text-slate-700 mb-2">תפקיד</Label>
-            <Input 
-              type="text" 
-              id="role" 
-              value={details.role} 
-              onChange={handleInputChange} 
-              className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:border-[#004080] focus:ring-2 focus:ring-[#004080]/20 transition-all placeholder:text-slate-400" 
-              placeholder="לדוגמה: מנהל/ת בית הספר" 
-              required 
-            />
-          </div>
-          <Button 
-            type="submit" 
-            className="group relative px-10 py-4 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-2xl font-bold text-lg text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2"
-          >
+
+          <Button type="submit" className="group relative px-10 py-4 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-2xl font-bold text-lg text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2">
             <span className="relative z-10 flex items-center gap-3">התחל הערכה
               <ArrowLeft className="w-5 h-5 transform group-hover:-translate-x-2 transition-transform" />
             </span>
@@ -299,6 +311,10 @@ function QuestionScreen({ question, questionNumber, totalQuestions, answer, onSe
   const isFirst = questionNumber === 1;
   const isLast = questionNumber === totalQuestions;
   
+  const isAnswered = question.type === 'open' 
+    ? (typeof answer === 'string' && answer.trim().length > 0) 
+    : (typeof answer === 'number' && answer > 0);
+
   return (
     <div className="animate-slide-up">
       <div className="glass-dark rounded-3xl p-8 glow">
@@ -313,30 +329,89 @@ function QuestionScreen({ question, questionNumber, totalQuestions, answer, onSe
         </div>
 
         <div className="mb-10">
-          <p className="text-lg text-slate-700 leading-relaxed mb-8">{question.text}</p>
+          <p className="text-lg text-slate-700 leading-relaxed mb-8 whitespace-pre-wrap">{question.text}</p>
           <div className="space-y-4">
-            <div className="flex justify-between text-sm text-slate-500 font-medium px-2">
-              <span>לא קיים</span>
-              <span>מלא</span>
-            </div>
-            <div className="flex justify-between gap-1 sm:gap-3" role="radiogroup" aria-label="דירוג">
-              {[1, 2, 3, 4, 5].map(rating => (
-                <button
-                  key={rating}
-                  onClick={() => onSelectRating(rating)}
-                  role="radio"
-                  aria-checked={answer === rating}
-                  aria-label={`דירוג ${rating}`}
-                  className={`rating-btn flex-1 h-12 sm:h-16 rounded-xl text-xl font-bold transition-all duration-300 hover:scale-110 focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2 ${
-                    answer === rating 
-                      ? 'bg-gradient-to-r from-[#004080] to-[#0066cc] text-white scale-110 shadow-lg shadow-blue-500/30' 
-                      : 'bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#004080]/30'
-                  }`}
-                >
-                  {rating}
-                </button>
-              ))}
-            </div>
+            
+            {question.type === 'rating' && (
+              <>
+                <div className="flex justify-between text-sm text-slate-500 font-medium px-2">
+                  <span>לא קיים</span>
+                  <span>מלא</span>
+                </div>
+                <div className="flex justify-between gap-1 sm:gap-3" role="radiogroup" aria-label="דירוג">
+                  {(question.options || [
+                    { value: 1, label: '1' },
+                    { value: 2, label: '2' },
+                    { value: 3, label: '3' },
+                    { value: 4, label: '4' },
+                    { value: 5, label: '5' }
+                  ]).map((opt: any) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => onSelectRating(opt.value)}
+                      role="radio"
+                      aria-checked={answer === opt.value}
+                      className={`rating-btn flex-1 h-12 sm:h-16 rounded-xl text-xl font-bold transition-all duration-300 hover:scale-110 focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2 flex flex-col items-center justify-center ${
+                        answer === opt.value 
+                          ? 'bg-gradient-to-r from-[#004080] to-[#0066cc] text-white scale-110 shadow-lg shadow-blue-500/30' 
+                          : 'bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#004080]/30'
+                      }`}
+                    >
+                      {question.options ? <span className="text-sm">{opt.label}</span> : opt.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {question.type === 'boolean' && (
+              <div className="flex justify-center gap-4" role="radiogroup">
+                {question.options.map((opt: any) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => onSelectRating(opt.value)}
+                    role="radio"
+                    aria-checked={answer === opt.value}
+                    className={`flex-1 py-4 rounded-xl text-xl font-bold transition-all duration-300 hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2 ${
+                      answer === opt.value 
+                        ? 'bg-gradient-to-r from-[#004080] to-[#0066cc] text-white shadow-lg shadow-blue-500/30' 
+                        : 'bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#004080]/30'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {question.type === 'percentage' && (
+              <div className="flex flex-col gap-3" role="radiogroup">
+                {question.options.map((opt: any) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => onSelectRating(opt.value)}
+                    role="radio"
+                    aria-checked={answer === opt.value}
+                    className={`w-full py-4 px-6 rounded-xl text-lg font-bold transition-all duration-300 hover:scale-[1.02] text-right focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2 ${
+                      answer === opt.value 
+                        ? 'bg-gradient-to-r from-[#004080] to-[#0066cc] text-white shadow-lg shadow-blue-500/30' 
+                        : 'bg-slate-100 border-2 border-slate-300 text-slate-700 hover:bg-slate-200 hover:border-[#004080]/30'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {question.type === 'open' && (
+              <textarea
+                value={typeof answer === 'string' ? answer : ''}
+                onChange={(e) => onSelectRating(e.target.value)}
+                placeholder="הקלד/י את תשובתך כאן..."
+                className="w-full h-40 p-4 rounded-xl border-2 border-slate-300 bg-slate-50 text-slate-700 focus:outline-none focus:border-[#004080] focus:ring-2 focus:ring-[#004080]/20 resize-none"
+              />
+            )}
             
           </div>
         </div>
@@ -352,7 +427,7 @@ function QuestionScreen({ question, questionNumber, totalQuestions, answer, onSe
           </Button>
           <Button 
             onClick={onNext} 
-            disabled={answer === 0} 
+            disabled={!isAnswered} 
             className="nav-btn flex items-center gap-2 px-6 py-3 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] text-white rounded-xl font-medium transition-all hover:scale-105 disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2"
           >
             {isLast ? 'סיום' : 'הבא'} <ArrowLeft className="w-5 h-5" />
@@ -474,27 +549,51 @@ function ScoreComparisonSection({ currentScore }: { currentScore: number }) {
   );
 }
 
-function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
+function ThankYouScreen({ onRestart }: any) {
+  return (
+    <div className="space-y-6 animate-slide-up">
+      <div className="glass-dark rounded-3xl p-10 glow text-center">
+        <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-6 shadow-lg">
+          <ShieldCheck className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-3xl font-bold text-slate-800 mb-4">תודה רבה!</h2>
+        <p className="text-lg text-slate-600 mb-8">השאלון הושלם בהצלחה והנתונים נשמרו במערכת.</p>
+        <div className="flex justify-center">
+          <Button 
+            onClick={onRestart} 
+            className="flex items-center gap-2 px-8 py-4 h-auto bg-gradient-to-r from-[#004080] to-[#0066cc] text-white rounded-xl font-medium text-lg hover:scale-105 transition-all shadow-md focus-visible:ring-2 focus-visible:ring-[#004080] focus-visible:ring-offset-2"
+          >
+            <ArrowRight className="w-5 h-5" /> חזרה למסך הראשי
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Hidden components kept for future use
+function HiddenResultsScreen({ answers, onRestart, onShowSummary }: any) {
   const [totalScore, setTotalScore] = React.useState(0);
   const [displayScore, setDisplayScore] = React.useState(0);
 
-  const score = answers.reduce((a, b) => a + b, 0);
+  const score = answers.reduce((a: any, b: any) => (typeof a === 'number' ? a : 0) + (typeof b === 'number' ? b : 0), 0) as number;
   const level = maturityLevels.find(l => score >= l.min && score <= l.max) || maturityLevels[0];
   
-  // Calculate maturity percent based on actual level ranges (10-20, 21-30, 31-40, 41-47, 48-50)
+  // Calculate maturity percent based on actual level ranges (0-42, 43-63, 64-84, 85-98, 99-105)
   const getMaturityPercent = (s: number) => {
-    if (s <= 10) return 0;
-    if (s <= 20) return ((s - 10) / 10) * 20; // Level 1: 0-20%
-    if (s <= 30) return 20 + ((s - 20) / 10) * 20; // Level 2: 20-40%
-    if (s <= 40) return 40 + ((s - 30) / 10) * 20; // Level 3: 40-60%
-    if (s <= 47) return 60 + ((s - 40) / 7) * 20; // Level 4: 60-80%
-    return 80 + ((s - 47) / 3) * 20; // Level 5: 80-100%
+    if (s <= 0) return 0;
+    if (s <= 42) return (s / 42) * 20; // Level 1: 0-20%
+    if (s <= 63) return 20 + ((s - 42) / 21) * 20; // Level 2: 20-40%
+    if (s <= 84) return 40 + ((s - 63) / 21) * 20; // Level 3: 40-60%
+    if (s <= 98) return 60 + ((s - 84) / 14) * 20; // Level 4: 60-80%
+    return 80 + ((s - 98) / 7) * 20; // Level 5: 80-100%
   };
   const maturityPercent = getMaturityPercent(score);
   
-  const minScore = Math.min(...answers.filter(a => a > 0));
-  const weakestIndex = answers.indexOf(minScore);
-  const strongestIndex = answers.indexOf(Math.max(...answers));
+  const numericAnswers = answers.filter((a: any) => typeof a === 'number' && a > 0) as number[];
+  const minScore = numericAnswers.length > 0 ? Math.min(...numericAnswers) : 0;
+  const weakestIndex = answers.findIndex((a: any) => typeof a === 'number' && a === minScore);
+  const strongestIndex = answers.findIndex((a: any) => typeof a === 'number' && a === Math.max(...numericAnswers));
 
   const quickWin = questions[weakestIndex]?.quickWin || 'אין המלצות זמינות.';
   const strength = questions[strongestIndex]?.category || '-';
@@ -511,7 +610,7 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
     }, 30);
 
     const circumference = 553;
-    const offset = circumference - (score / 50) * circumference;
+    const offset = circumference - (score / 105) * circumference;
     const circle = document.getElementById('score-circle');
     if (circle) {
       setTimeout(() => {
@@ -554,7 +653,7 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-5xl font-bold gradient-text">{displayScore}</span>
-                <span className="text-slate-500">מתוך 50</span>
+                <span className="text-slate-500">מתוך 105</span>
               </div>
             </div>
           </div>
@@ -689,10 +788,11 @@ function ResultsScreen({ answers, onRestart, onShowSummary }: any) {
 function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
   if (!isOpen) return null;
 
-  const totalScore = answers.reduce((a, b) => a + b, 0);
+  const totalScore = answers.reduce((a: any, b: any) => (typeof a === 'number' ? a : 0) + (typeof b === 'number' ? b : 0), 0) as number;
   const level = maturityLevels.find(l => totalScore >= l.min && totalScore <= l.max) || maturityLevels[0];
-  const minScore = Math.min(...answers.filter(a => a > 0));
-  const weakestIndex = answers.indexOf(minScore);
+  const numericAnswers = answers.filter((a: any) => typeof a === 'number' && a > 0) as number[];
+  const minScore = numericAnswers.length > 0 ? Math.min(...numericAnswers) : 0;
+  const weakestIndex = answers.findIndex((a: any) => typeof a === 'number' && a === minScore);
   const recommendation = questions[weakestIndex]?.quickWin || 'אין המלצה.';
   
   return (
@@ -712,33 +812,41 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
         <div className="p-8 pt-0">
           <div className="space-y-6">
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-3">
-                <div><span className="text-[#004080] font-semibold">אימייל:</span> <span className="text-slate-700 mr-2">{userDetails.email}</span></div>
-                <div><span className="text-[#004080] font-semibold">בית הספר:</span> <span className="text-slate-700 mr-2">{userDetails.schoolName}</span></div>
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div><span className="text-[#004080] font-semibold">עיר:</span> <span className="text-slate-700 mr-2">{userDetails.city}</span></div>
-                <div><span className="text-[#004080] font-semibold">תפקיד:</span> <span className="text-slate-700 mr-2">{userDetails.role}</span></div>
+                <div><span className="text-[#004080] font-semibold">שם המוסד החינוכי:</span> <span className="text-slate-700 mr-2">{userDetails.institutionName}</span></div>
+                <div><span className="text-[#004080] font-semibold">שם מלא - מנהל/ת:</span> <span className="text-slate-700 mr-2">{userDetails.principalName}</span></div>
+                <div><span className="text-[#004080] font-semibold">רכז/ת התקשוב:</span> <span className="text-slate-700 mr-2">{userDetails.ictCoordinatorName || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">רכז/ת חדשנות:</span> <span className="text-slate-700 mr-2">{userDetails.innovationCoordinatorName || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">שכבות גיל:</span> <span className="text-slate-700 mr-2">{userDetails.ageGroups || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">סה&quot;כ תלמידים/ות:</span> <span className="text-slate-700 mr-2">{userDetails.totalStudents || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">% בנים / % בנות:</span> <span className="text-slate-700 mr-2">{[userDetails.percentMaleStudents, userDetails.percentFemaleStudents].filter(Boolean).join(' / ') || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">מס&#39; מורים/ות:</span> <span className="text-slate-700 mr-2">{userDetails.numberOfTeachers || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">אמצעי קצה:</span> <span className="text-slate-700 mr-2">{userDetails.totalDevices || 'לא צוין'}</span></div>
+                <div><span className="text-[#004080] font-semibold">אימייל:</span> <span className="text-slate-700 mr-2">{userDetails.email || 'לא צוין'}</span></div>
               </div>
             </div>
             <div className="bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-xl p-6 text-white shadow-lg">
               <div className="flex items-center justify-between">
-                <div><p className="text-blue-200 text-sm mb-1">ציון כולל</p><p className="text-4xl font-bold">{totalScore}/50</p></div>
+                <div><p className="text-blue-200 text-sm mb-1">ציון כולל</p><p className="text-4xl font-bold">{totalScore}/105</p></div>
                 <div className="text-left"><p className="text-blue-200 text-sm mb-1">רמת בשלות</p><p className="text-xl font-bold">{level.name}</p></div>
               </div>
             </div>
             <div>
-              <h3 className="font-bold text-[#004080] mb-3">פירוט לפי תחומים</h3>
+              <h3 className="font-bold text-[#004080] mb-3">פירוט לפי שאלות</h3>
               <div className="space-y-2">
                 {questions.map((q, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <span className="text-sm text-slate-700 font-medium">{q.category}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-[#004080] rounded-full" style={{ width: `${answers[i] * 20}%` }}></div>
+                  <div key={i} className="flex flex-col p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <span className="text-sm text-slate-700 font-medium mb-2">{q.title} ({q.category})</span>
+                    {typeof answers[i] === 'number' ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#004080] rounded-full" style={{ width: `${(answers[i] as number) * 20}%` }}></div>
+                        </div>
+                        <span className="text-sm font-bold text-[#004080] w-6 text-center">{answers[i]}</span>
                       </div>
-                      <span className="text-sm font-bold text-[#004080] w-6 text-center">{answers[i]}</span>
-                    </div>
+                    ) : (
+                      <p className="text-sm text-slate-600 bg-white p-2 rounded border border-slate-100">{answers[i] || 'לא נענה'}</p>
+                    )}
                   </div>
                 ))}
               </div>

@@ -46,7 +46,7 @@ export default function Header({
                 </Button>
               </Link>
             )}
-            {showAnalyticsButton && (
+            {/* {showAnalyticsButton && (
               <Link href="/analytics">
                 <Button 
                   variant="ghost" 
@@ -57,7 +57,7 @@ export default function Header({
                   <span className="hidden xs:inline">ניתוח</span>
                 </Button>
               </Link>
-            )}
+            )} */}
           </div>
           
           {/* Logo and title on the right for mobile */}
@@ -89,7 +89,7 @@ export default function Header({
                 </Button>
               </Link>
             )}
-            {showAnalyticsButton && (
+            {/* {showAnalyticsButton && (
               <Link href="/analytics">
                 <Button 
                   variant="ghost" 
@@ -99,7 +99,7 @@ export default function Header({
                   ניתוח נתונים
                 </Button>
               </Link>
-            )}
+            )} */}
           </div>
           {progress > 0 && currentQuestion && totalQuestions && (
             <div className="flex items-center gap-3 absolute right-0">
