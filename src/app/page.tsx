@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogTitle, DialogHeader } from '@/components/u
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ArrowRight, BarChart, FileText, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, Activity } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BarChart, FileText, RefreshCcw, X, Zap, Target, Lightbulb, TrendingUp, ShieldCheck, Activity, Info } from 'lucide-react';
 
 import { OrtLogo, CubeIcon } from '@/components/assessment/icons';
 import RadarChart from '@/components/assessment/radar-chart';
@@ -26,17 +26,9 @@ type Screen = 'welcome' | 'question' | 'results';
 
 const emptyUserDetails: UserDetails = {
   institutionName: '',
+  institutionSymbol: '',
   principalName: '',
-  ictCoordinatorName: '',
-  innovationCoordinatorName: '',
-  ageGroups: '',
-  totalStudents: '',
-  percentMaleStudents: '',
-  percentFemaleStudents: '',
-  numberOfTeachers: '',
   totalDevices: '',
-  email: '',
-  emailConsent: false,
 };
 
 // Main Application Component
@@ -221,28 +213,26 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
   return (
     <div className="animate-scale-in">
       <div className="glass-dark rounded-3xl p-10 text-center glow">
-        <div className="mb-8">
-          <div className="w-28 h-28 mx-auto rounded-full bg-gradient-to-br from-[#004080] to-[#0066cc] flex items-center justify-center mb-6 animate-float shadow-lg">
-            <CubeIcon className="w-16 h-16" />
-          </div>
+        <div className="flex flex-col items-center justify-center">
           <h2 className="text-4xl font-bold mb-4 gradient-text glow-text">מדד הבינה המלאכותית</h2>
-          <p className="text-xl text-[#004080] font-medium mb-2">AI Intelligence Index</p>
-          <p className="text-slate-600 max-w-lg mx-auto leading-relaxed">כלי אבחון מתקדם למנהלי בתי ספר להערכת רמת הבשלות הארגונית בתחום הבינה המלאכותית לפי מודל ICMM</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          {stats.map((stat, i) => (
-            <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
-              <div className="text-3xl font-bold text-[#004080]">{stat.value}</div>
-              <div className="text-sm text-slate-600 font-medium">{stat.label}</div>
-            </div>
-          ))}
+          <p className="text-xl text-[#004080] font-medium mb-2 flex flex-col">שילוב מיטבי של בינה מלאכותית לסיוע ושיפור תהליכי למידה, הוראה והערכה הינו יעד של מערכת החינוך ורשת אורט.  
+מטרת השאלון לסייע להנהלת בית הספר ולמטה הרשת לקבל את תמונת המצב הנוכחית לגבי מידת המוכנות והבשלות של בית הספר בשילוב בינה מלאכותית. 
+ממצאי השאלון יאפשרו לנו לגבש ולהציע תמיכה ומענים מדויקים ומותאמים לצרכי בית הספר. 
+השאלון מתמקד ספציפית בהיבטים של הטמעת הבינה המלאכותית בבית הספר (ולא בהיבטים כלליים של חדשנות ותקשוב) - אנא השיבו בהתייחס לכך. 
+נודה למענה כנה ומדויק המשקף את תמונת המצב כפי שהיא כיום בבית הספר.
+<span className="text-2xl text-slate-600 text-center mb-4 mt-4">תודה על שיתוף הפעולה!</span>
+</p>
         </div>
         <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8 space-y-4">
-          <p className="text-sm text-slate-600 text-center mb-4">מלא/י את פרטי המוסד כפי שמופיעים בשאלון. שדות חובה: שם המוסד ושם המנהל/ת.</p>
+          <p className="text-sm text-slate-600 text-center mb-4">פרטי בית הספר</p>
 
           <div className="text-right">
             <Label htmlFor="institutionName" className={labelRequired}>שם המוסד החינוכי *</Label>
             <Input type="text" id="institutionName" value={details.institutionName} onChange={handleInputChange} className={inputClass} placeholder="לדוגמה: אורט תל אביב" required />
+          </div>
+          <div className="text-right">
+            <Label htmlFor="institutionSymbol" className={labelRequired}>סמל המוסד *</Label>
+            <Input type="text" id="institutionSymbol" value={details.institutionSymbol} onChange={handleInputChange} className={inputClass} placeholder="סמל מוסד (מספר)" required />
           </div>
           <div className="text-right">
             <Label htmlFor="principalName" className={labelRequired}>שם מלא - מנהל/ת *</Label>
@@ -250,49 +240,9 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
           </div>
 
           <div className="border-t border-slate-200 pt-4 space-y-4">
-            <p className="text-xs text-slate-500 text-center mb-2">שדות אופציונליים</p>
-            <div className="text-right">
-              <Label htmlFor="ictCoordinatorName" className={labelOptional}>שם מלא - רכז/ת התקשוב</Label>
-              <Input type="text" id="ictCoordinatorName" value={details.ictCoordinatorName ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
-            </div>
-            <div className="text-right">
-              <Label htmlFor="innovationCoordinatorName" className={labelOptional}>שם מלא - רכז/ת חדשנות / &apos;פיוצ&apos;ריסט&apos; (אם קייים)</Label>
-              <Input type="text" id="innovationCoordinatorName" value={details.innovationCoordinatorName ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
-            </div>
-            <div className="text-right">
-              <Label htmlFor="ageGroups" className={labelOptional}>שכבות הגיל במוסד החינוכי</Label>
-              <Input type="text" id="ageGroups" value={details.ageGroups ?? ''} onChange={handleInputChange} className={inputClass} placeholder="לדוגמה: ז'-יב'" />
-            </div>
-            <div className="text-right">
-              <Label htmlFor="totalStudents" className={labelOptional}>סה&quot;כ מס&#39; התלמידים/ות</Label>
-              <Input type="text" inputMode="numeric" id="totalStudents" value={details.totalStudents ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-right">
-              <div>
-                <Label htmlFor="percentMaleStudents" className={labelOptional}>% התלמידים הבנים</Label>
-                <Input type="text" inputMode="numeric" id="percentMaleStudents" value={details.percentMaleStudents ?? ''} onChange={handleInputChange} className={inputClass} placeholder="%" />
-              </div>
-              <div>
-                <Label htmlFor="percentFemaleStudents" className={labelOptional}>% התלמידות הבנות</Label>
-                <Input type="text" inputMode="numeric" id="percentFemaleStudents" value={details.percentFemaleStudents ?? ''} onChange={handleInputChange} className={inputClass} placeholder="%" />
-              </div>
-            </div>
-            <div className="text-right">
-              <Label htmlFor="numberOfTeachers" className={labelOptional}>מס&#39; המורים/ות</Label>
-              <Input type="text" inputMode="numeric" id="numberOfTeachers" value={details.numberOfTeachers ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
-            </div>
             <div className="text-right">
               <Label htmlFor="totalDevices" className={labelOptional}>סה&quot;כ מס&#39; אמצעי הקצה בבעלות בית הספר (מחשבים נייחים, ניידים, טבלטים)</Label>
               <Input type="text" inputMode="numeric" id="totalDevices" value={details.totalDevices ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
-            </div>
-          </div>
-
-          <div className="text-right border-t border-slate-200 pt-4">
-            <Label htmlFor="email" className={labelOptional}>כתובת אימייל (אופציונלי)</Label>
-            <Input type="email" id="email" value={details.email ?? ''} onChange={handleInputChange} className={inputClass} placeholder="manager@school.edu.il" />
-            <div className="flex items-center gap-2 mt-3 text-right">
-              <Label htmlFor="emailConsent" className="text-sm text-slate-600 leading-relaxed cursor-pointer">אני מסכים/ה לקבל עדכונים באימייל מאורט</Label>
-              <Checkbox id="emailConsent" checked={details.emailConsent} onCheckedChange={(checked) => setDetails(prev => ({ ...prev, emailConsent: checked === true }))} className="border-slate-400 data-[state=checked]:bg-[#004080] data-[state=checked]:border-[#004080]" />
             </div>
           </div>
 
@@ -304,6 +254,7 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
         </form>
       </div>
     </div>
+    
   );
 }
 
@@ -323,20 +274,42 @@ function QuestionScreen({ question, questionNumber, totalQuestions, answer, onSe
             {questionNumber}
           </div>
           <div className="flex-1">
-            <div className="text-sm text-[#0066cc] font-semibold mb-1">{question.category}</div>
+            <div className="text-base text-[#0066cc] font-bold mb-1">{question.category}</div>
             <h3 className="text-xl font-bold text-slate-800">{question.title}</h3>
           </div>
         </div>
 
         <div className="mb-10">
           <p className="text-lg text-slate-700 leading-relaxed mb-8 whitespace-pre-wrap">{question.text}</p>
+          
+          {question.info && (
+            <div className="mb-8 flex items-start gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <Info className="w-5 h-5 text-[#0066cc] mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-slate-600 leading-relaxed italic">{question.info}</p>
+            </div>
+          )}
+
+          {question.link && (
+            <div className="mb-8">
+              <a 
+                href={question.link} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[#0066cc] font-semibold hover:underline bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 transition-colors hover:bg-blue-100"
+              >
+                <FileText className="w-5 h-5" />
+                {question.linkLabel || 'למידע נוסף'}
+              </a>
+            </div>
+          )}
+
           <div className="space-y-4">
             
             {question.type === 'rating' && (
               <>
                 <div className="flex justify-between text-sm text-slate-500 font-medium px-2">
-                  <span>לא קיים</span>
-                  <span>מלא</span>
+                  <span>כלל לא</span>
+                  <span>במידה רבה מאוד</span>
                 </div>
                 <div className="flex justify-between gap-1 sm:gap-3" role="radiogroup" aria-label="דירוג">
                   {(question.options || [
@@ -814,15 +787,9 @@ function SummaryModal({ isOpen, onClose, answers, userDetails }: any) {
             <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div><span className="text-[#004080] font-semibold">שם המוסד החינוכי:</span> <span className="text-slate-700 mr-2">{userDetails.institutionName}</span></div>
+                <div><span className="text-[#004080] font-semibold">סמל המוסד:</span> <span className="text-slate-700 mr-2">{userDetails.institutionSymbol}</span></div>
                 <div><span className="text-[#004080] font-semibold">שם מלא - מנהל/ת:</span> <span className="text-slate-700 mr-2">{userDetails.principalName}</span></div>
-                <div><span className="text-[#004080] font-semibold">רכז/ת התקשוב:</span> <span className="text-slate-700 mr-2">{userDetails.ictCoordinatorName || 'לא צוין'}</span></div>
-                <div><span className="text-[#004080] font-semibold">רכז/ת חדשנות:</span> <span className="text-slate-700 mr-2">{userDetails.innovationCoordinatorName || 'לא צוין'}</span></div>
-                <div><span className="text-[#004080] font-semibold">שכבות גיל:</span> <span className="text-slate-700 mr-2">{userDetails.ageGroups || 'לא צוין'}</span></div>
-                <div><span className="text-[#004080] font-semibold">סה&quot;כ תלמידים/ות:</span> <span className="text-slate-700 mr-2">{userDetails.totalStudents || 'לא צוין'}</span></div>
-                <div><span className="text-[#004080] font-semibold">% בנים / % בנות:</span> <span className="text-slate-700 mr-2">{[userDetails.percentMaleStudents, userDetails.percentFemaleStudents].filter(Boolean).join(' / ') || 'לא צוין'}</span></div>
-                <div><span className="text-[#004080] font-semibold">מס&#39; מורים/ות:</span> <span className="text-slate-700 mr-2">{userDetails.numberOfTeachers || 'לא צוין'}</span></div>
                 <div><span className="text-[#004080] font-semibold">אמצעי קצה:</span> <span className="text-slate-700 mr-2">{userDetails.totalDevices || 'לא צוין'}</span></div>
-                <div><span className="text-[#004080] font-semibold">אימייל:</span> <span className="text-slate-700 mr-2">{userDetails.email || 'לא צוין'}</span></div>
               </div>
             </div>
             <div className="bg-gradient-to-r from-[#004080] to-[#0066cc] rounded-xl p-6 text-white shadow-lg">
