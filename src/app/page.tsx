@@ -214,14 +214,18 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
     <div className="animate-scale-in">
       <div className="glass-dark rounded-3xl p-10 text-center glow">
         <div className="flex flex-col items-center justify-center">
-          <h2 className="text-4xl font-bold mb-4 gradient-text glow-text">מדד הבינה המלאכותית</h2>
-          <p className="text-xl text-[#004080] font-medium mb-2 flex flex-col">שילוב מיטבי של בינה מלאכותית לסיוע ושיפור תהליכי למידה, הוראה והערכה הינו יעד של מערכת החינוך ורשת אורט.  
-מטרת השאלון לסייע להנהלת בית הספר ולמטה הרשת לקבל את תמונת המצב הנוכחית לגבי מידת המוכנות והבשלות של בית הספר בשילוב בינה מלאכותית. 
-ממצאי השאלון יאפשרו לנו לגבש ולהציע תמיכה ומענים מדויקים ומותאמים לצרכי בית הספר. 
-השאלון מתמקד ספציפית בהיבטים של הטמעת הבינה המלאכותית בבית הספר (ולא בהיבטים כלליים של חדשנות ותקשוב) - אנא השיבו בהתייחס לכך. 
-נודה למענה כנה ומדויק המשקף את תמונת המצב כפי שהיא כיום בבית הספר.
-<span className="text-2xl text-slate-600 text-center mb-4 mt-4">תודה על שיתוף הפעולה!</span>
-</p>
+          <h2 className="text-4xl font-bold mb-4 gradient-text glow-text">מדד בית ספר מוסמך AI</h2>
+          <div className="text-xl text-[#004080] font-medium mb-2 text-right space-y-3">
+            <p>רשת אורט, כחלוצה ומובילה בחדשנות טכנולוגית במערכת החינוך, מציבה את שילוב הבינה המלאכותית כציר מרכזי וכיעד אסטרטגי לשדרוג תהליכי הלמידה, ההוראה והערכה בבתי הספר שלה.</p>
+            <p>שאלון זה נועד לאפשר למטה הרשת ולהנהלת בית הספר לקבל תמונת מצב מדויקת ועדכנית בנוגע למידת המוכנות והבשלות המוסדית לאימוץ כלי ה-AI.</p>
+            <p>הממצאים שיעלו יהוו בסיס מקצועי לגיבוש מעני תמיכה, הכשרות ותשתיות מותאמות, שיבטיחו את המשך הובלתו של בית הספר בעידן הבינה המלאכותית.</p>
+            <p className="font-semibold">דגשים למילוי השאלון:</p>
+            <ul className="list-disc list-inside space-y-2 pr-2">
+              <li>השאלון מתמקד אך ורק בהיבטי הטמעת הבינה מלאכותית בבית הספר. יש להפריד בין פעילות זו לבין היבטי תקשוב וחדשנות דיגיטלית כלליים.</li>
+              <li>נודה למענה כנה ומדויק המשקף את תמונת המצב כפי שהיא כיום בבית הספר.</li>
+            </ul>
+            <span className="text-2xl text-slate-600 text-center mb-4 mt-4 block">תודה על שיתוף הפעולה!</span>
+          </div>
         </div>
         <form onSubmit={handleSubmit} className="max-w-md mx-auto mb-8 space-y-4">
           <p className="text-sm text-slate-600 text-center mb-4">פרטי בית הספר</p>
@@ -232,7 +236,7 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
           </div>
           <div className="text-right">
             <Label htmlFor="institutionSymbol" className={labelRequired}>סמל המוסד *</Label>
-            <Input type="text" id="institutionSymbol" value={details.institutionSymbol} onChange={handleInputChange} className={inputClass} placeholder="סמל מוסד (מספר)" required />
+            <Input type="number" id="institutionSymbol" value={details.institutionSymbol} onChange={handleInputChange} className={inputClass} placeholder="סמל מוסד (מספר)" required />
           </div>
           <div className="text-right">
             <Label htmlFor="principalName" className={labelRequired}>שם מלא - מנהל/ת *</Label>
@@ -242,7 +246,7 @@ function WelcomeScreen({ onStart }: { onStart: (details: UserDetails) => void })
           <div className="border-t border-slate-200 pt-4 space-y-4">
             <div className="text-right">
               <Label htmlFor="totalDevices" className={labelOptional}>סה&quot;כ מס&#39; אמצעי הקצה בבעלות בית הספר (מחשבים נייחים, ניידים, טבלטים)</Label>
-              <Input type="text" inputMode="numeric" id="totalDevices" value={details.totalDevices ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
+              <Input type="number" inputMode="numeric" id="totalDevices" value={details.totalDevices ?? ''} onChange={handleInputChange} className={inputClass} placeholder="" />
             </div>
           </div>
 
